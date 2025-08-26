@@ -11,6 +11,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline"
+import Modal from "@/components/modal/Modal"
+import CreatePropertyForm from "@/components/form/property/CreatePropertyForm"
 
 interface Property {
   id: string
@@ -70,6 +72,7 @@ export default function PropertyTable() {
   const [rowsPerPage, setRowsPerPage] = useState(20)
   const [sortColumn, setSortColumn] = useState<keyof Property>("name")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
   const filteredProperties = mockProperties.filter((property) => {
     const matchesSearch =
@@ -104,6 +107,12 @@ export default function PropertyTable() {
     }
   }
 
+  const handleCreateProperty = (propertyData: any) => {
+    // Add logic to update your data here
+    console.log("Creating new property:", propertyData)
+    setIsCreateModalOpen(false)
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -112,7 +121,10 @@ export default function PropertyTable() {
           <h1 className="text-3xl font-bold text-foreground">Property</h1>
           <p className="text-muted-foreground mt-1">Manage your real estate portfolio</p>
         </div>
-        <button className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors font-medium">
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors font-medium"
+        >
           <PlusIcon className="w-4 h-4" />
           New Property
         </button>
@@ -363,6 +375,11 @@ export default function PropertyTable() {
           </div>
         )}
       </div>
+
+      {/* Create Property Modal */}
+      <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create New Property">
+        <CreatePropertyForm onSubmit={handleCreateProperty} onCancel={() => setIsCreateModalOpen(false)} />
+      </Modal>
     </div>
   )
 }

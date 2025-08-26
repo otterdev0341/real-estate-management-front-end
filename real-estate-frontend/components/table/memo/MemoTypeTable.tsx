@@ -9,6 +9,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline"
+import Modal from "@/components/modal/Modal"
+import CreateMemoTypeForm from "@/components/form/memo/CreateMemoTypeForm"
 
 interface MemoType {
   id: string
@@ -50,6 +52,7 @@ const MemoTypeTable = () => {
   const [rowsPerPage, setRowsPerPage] = useState(20)
   const [sortColumn, setSortColumn] = useState<keyof MemoType>("detail")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
   const filteredMemoTypes = mockMemoTypes.filter((type) =>
     type.detail.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -80,6 +83,12 @@ const MemoTypeTable = () => {
     }
   }
 
+  const handleCreateMemoType = (memoTypeData: { detail: string }) => {
+    // Add logic to update your data here
+    console.log("Creating new memo type:", memoTypeData)
+    setIsCreateModalOpen(false)
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -88,7 +97,10 @@ const MemoTypeTable = () => {
           <h1 className="text-3xl font-bold text-foreground">Memo Types</h1>
           <p className="text-muted-foreground mt-1">Manage memo type categories</p>
         </div>
-        <button className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors font-medium">
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors font-medium"
+        >
           <PlusIcon className="w-4 h-4" />
           New Memo Type
         </button>
@@ -265,6 +277,11 @@ const MemoTypeTable = () => {
           </div>
         )}
       </div>
+
+      {/* Create Memo Type Modal */}
+      <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create New Memo Type">
+        <CreateMemoTypeForm onSubmit={handleCreateMemoType} onCancel={() => setIsCreateModalOpen(false)} />
+      </Modal>
     </div>
   )
 }

@@ -9,6 +9,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline"
+import Modal from "@/components/modal/Modal"
+import CreateContactTypeForm from "@/components/form/contact/CreateContactTypeForm"
 
 interface ContactType {
   id: string
@@ -50,6 +52,7 @@ const ConntactTypeTable = () => {
   const [rowsPerPage, setRowsPerPage] = useState(20)
   const [sortColumn, setSortColumn] = useState<keyof ContactType>("detail")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
   const filteredContactTypes = mockContactTypes.filter((type) =>
     type.detail.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -80,6 +83,12 @@ const ConntactTypeTable = () => {
     }
   }
 
+  const handleCreateContactType = (contactTypeData: { detail: string }) => {
+    // Add logic to update your data here
+    console.log("Creating new contact type:", contactTypeData)
+    setIsCreateModalOpen(false)
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -88,7 +97,10 @@ const ConntactTypeTable = () => {
           <h1 className="text-3xl font-bold text-foreground">Contact Types</h1>
           <p className="text-muted-foreground mt-1">Manage contact type categories</p>
         </div>
-        <button className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors font-medium">
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors font-medium"
+        >
           <PlusIcon className="w-4 h-4" />
           New Contact Type
         </button>
@@ -265,6 +277,11 @@ const ConntactTypeTable = () => {
           </div>
         )}
       </div>
+
+      {/* Create Contact Type Modal */}
+      <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create New Contact Type">
+        <CreateContactTypeForm onSubmit={handleCreateContactType} onCancel={() => setIsCreateModalOpen(false)} />
+      </Modal>
     </div>
   )
 }

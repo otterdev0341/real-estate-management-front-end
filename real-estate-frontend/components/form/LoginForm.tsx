@@ -53,7 +53,7 @@ const LoginForm = () => {
       const data = await res.json()
       if (data.data && data.data.token) {
         const token = data.data.token
-        sessionStorage.setItem("token", token)
+        document.cookie = `token=${token}; path=/;`
 
         // Fetch user data from /auth/resme
         const userRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/auth/resme`, {

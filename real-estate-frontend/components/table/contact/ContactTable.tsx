@@ -9,6 +9,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline"
+import Modal from "@/components/modal/Modal"
+import CreateContactForm from "@/components/form/contact/CreateContactForm"
 
 interface Contact {
   id: string
@@ -65,6 +67,7 @@ export default function ContactTable() {
   const [rowsPerPage, setRowsPerPage] = useState(20)
   const [sortColumn, setSortColumn] = useState<keyof Contact>("businessName")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
   const filteredContacts = mockContacts.filter((contact) => {
     const matchesSearch =
@@ -100,6 +103,12 @@ export default function ContactTable() {
     }
   }
 
+  const handleCreateContact = (contactData: any) => {
+    // Add logic to update your data here
+    console.log("Creating new contact:", contactData)
+    setIsCreateModalOpen(false)
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -108,7 +117,10 @@ export default function ContactTable() {
           <h1 className="text-3xl font-bold text-foreground">Contacts</h1>
           <p className="text-muted-foreground mt-1">Manage your contacts</p>
         </div>
-        <button className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors font-medium">
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors font-medium"
+        >
           <PlusIcon className="w-4 h-4" />
           New Contact
         </button>
@@ -337,6 +349,11 @@ export default function ContactTable() {
           </div>
         )}
       </div>
+
+      {/* Create Contact Modal */}
+      <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create New Contact">
+        <CreateContactForm onSubmit={handleCreateContact} onCancel={() => setIsCreateModalOpen(false)} />
+      </Modal>
     </div>
   )
 }
