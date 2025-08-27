@@ -11,50 +11,22 @@ import {
 } from "@heroicons/react/24/outline"
 import Modal from "@/components/modal/Modal"
 import CreateMemoTypeForm from "@/components/form/memo/CreateMemoTypeForm"
-
-interface MemoType {
-  id: string
-  detail: string
-  createdAt: string
-  updatedAt: string
-}
-
-const mockMemoTypes: MemoType[] = [
-  {
-    id: "MT001",
-    detail: "General Note",
-    createdAt: "2024-01-01",
-    updatedAt: "2024-01-15",
-  },
-  {
-    id: "MT002",
-    detail: "Legal Memo",
-    createdAt: "2024-01-02",
-    updatedAt: "2024-01-16",
-  },
-  {
-    id: "MT003",
-    detail: "Finance Memo",
-    createdAt: "2024-01-03",
-    updatedAt: "2024-01-17",
-  },
-  {
-    id: "MT004",
-    detail: "Maintenance Memo",
-    createdAt: "2024-01-04",
-    updatedAt: "2024-01-18",
-  },
-]
+import { ResEntryMemoTypeDto } from "@/domain/memo/ResEntryMemoTypeDto"
+import { MemoTypeService } from "@/service/memo/MemoTypeService"
+import { useMemoTypeContext } from "@/context/store/MemoTypeStore"
+import formatDate from "@/utility/utility"
 
 const MemoTypeTable = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(20)
-  const [sortColumn, setSortColumn] = useState<keyof MemoType>("detail")
+  const [sortColumn, setSortColumn] = useState<keyof ResEntryMemoTypeDto>("detail")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
-  const filteredMemoTypes = mockMemoTypes.filter((type) =>
+  const { memoTypes, refreshMemoTypes } = useMemoTypeContext()
+
+  const filteredMemoTypes = memoTypes.filter((type) =>
     type.detail.toLowerCase().includes(searchTerm.toLowerCase()) ||
     type.id.toLowerCase().includes(searchTerm.toLowerCase())
   )
@@ -74,7 +46,7 @@ const MemoTypeTable = () => {
   const startIndex = (currentPage - 1) * rowsPerPage
   const paginatedMemoTypes = sortedMemoTypes.slice(startIndex, startIndex + rowsPerPage)
 
-  const handleSort = (column: keyof MemoType) => {
+  const handleSort = (column: keyof ResEntryMemoTypeDto) => {
     if (column === sortColumn) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc")
     } else {
@@ -83,9 +55,10 @@ const MemoTypeTable = () => {
     }
   }
 
-  const handleCreateMemoType = (memoTypeData: { detail: string }) => {
-    // Add logic to update your data here
-    console.log("Creating new memo type:", memoTypeData)
+  const handleCreateMemoType = async (memoTypeData: { detail: string }) => {
+    // Call create and refresh
+    await MemoTypeService.instance.createNewMemoType(memoTypeData)
+    await refreshMemoTypes()
     setIsCreateModalOpen(false)
   }
 
@@ -134,7 +107,7 @@ const MemoTypeTable = () => {
                 ].map((column) => (
                   <th
                     key={column.key}
-                    onClick={() => handleSort(column.key as keyof MemoType)}
+                    onClick={() => handleSort(column.key as keyof ResEntryMemoTypeDto)}
                     className="px-6 py-4 text-left text-sm font-semibold text-foreground cursor-pointer hover:text-accent transition-colors select-none"
                   >
                     <div className="flex items-center gap-1">
@@ -157,10 +130,10 @@ const MemoTypeTable = () => {
                       index % 2 === 0 ? "bg-background/50" : "bg-muted/20"
                     }`}
                   >
-                    <td className="px-6 py-4 text-sm font-medium text-foreground">{type.id}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-foreground">{type.id.slice(0,6)}</td>
                     <td className="px-6 py-4 text-sm text-foreground font-medium">{type.detail}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{type.createdAt}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{type.updatedAt}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(type.createdAt)}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(type.updatedAt)}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button className="p-1 text-muted-foreground hover:text-accent transition-colors">
@@ -248,11 +221,11 @@ const MemoTypeTable = () => {
                   <h3 className="font-semibold text-foreground text-lg">{type.detail}</h3>
                   <div className="flex items-center gap-2">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                      {type.id}
+                      {type.id.slice(0,6)}
                     </span>
                   </div>
-                  <p className="text-muted-foreground text-sm">Created: {type.createdAt}</p>
-                  <p className="text-muted-foreground text-sm">Updated: {type.updatedAt}</p>
+                  <p className="text-muted-foreground text-sm">Created: {formatDate(type.createdAt)}</p>
+                  <p className="text-muted-foreground text-sm">Updated: {formatDate(type.updatedAt)}</p>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
                   <button className="p-2 text-muted-foreground hover:text-accent hover:bg-accent/10 rounded-lg transition-colors">

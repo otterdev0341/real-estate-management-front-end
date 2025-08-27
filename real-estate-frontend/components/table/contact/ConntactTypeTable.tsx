@@ -11,50 +11,22 @@ import {
 } from "@heroicons/react/24/outline"
 import Modal from "@/components/modal/Modal"
 import CreateContactTypeForm from "@/components/form/contact/CreateContactTypeForm"
-
-interface ContactType {
-  id: string
-  detail: string
-  createdAt: string
-  updatedAt: string
-}
-
-const mockContactTypes: ContactType[] = [
-  {
-    id: "CT001",
-    detail: "Owner",
-    createdAt: "2024-01-01",
-    updatedAt: "2024-01-15",
-  },
-  {
-    id: "CT002",
-    detail: "Tenant",
-    createdAt: "2024-01-02",
-    updatedAt: "2024-01-16",
-  },
-  {
-    id: "CT003",
-    detail: "Agent",
-    createdAt: "2024-01-03",
-    updatedAt: "2024-01-17",
-  },
-  {
-    id: "CT004",
-    detail: "Maintenance",
-    createdAt: "2024-01-04",
-    updatedAt: "2024-01-18",
-  },
-]
+import { useContactTypeContext } from "@/context/store/ContactTypeStore"
+import formatDate from "@/utility/utility"
+import { ContactTypeService } from "@/service/contact/ContactTypeService"
+import ResEntryContactTypeDto from "@/domain/contact/contactType/ResEntryContactTypeDto"
 
 const ConntactTypeTable = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(20)
-  const [sortColumn, setSortColumn] = useState<keyof ContactType>("detail")
+  const [sortColumn, setSortColumn] = useState<keyof ResEntryContactTypeDto>("detail")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
-  const filteredContactTypes = mockContactTypes.filter((type) =>
+  const { contactTypes, refreshContactTypes } = useContactTypeContext()
+
+  const filteredContactTypes = contactTypes.filter((type) =>
     type.detail.toLowerCase().includes(searchTerm.toLowerCase()) ||
     type.id.toLowerCase().includes(searchTerm.toLowerCase())
   )
@@ -74,7 +46,7 @@ const ConntactTypeTable = () => {
   const startIndex = (currentPage - 1) * rowsPerPage
   const paginatedContactTypes = sortedContactTypes.slice(startIndex, startIndex + rowsPerPage)
 
-  const handleSort = (column: keyof ContactType) => {
+  const handleSort = (column: keyof ResEntryContactTypeDto) => {
     if (column === sortColumn) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc")
     } else {
@@ -83,9 +55,9 @@ const ConntactTypeTable = () => {
     }
   }
 
-  const handleCreateContactType = (contactTypeData: { detail: string }) => {
-    // Add logic to update your data here
-    console.log("Creating new contact type:", contactTypeData)
+  const handleCreateContactType = async (contactTypeData: { detail: string }) => {
+    await ContactTypeService.instance.createNewContactType(contactTypeData)
+    await refreshContactTypes()
     setIsCreateModalOpen(false)
   }
 
@@ -134,7 +106,7 @@ const ConntactTypeTable = () => {
                 ].map((column) => (
                   <th
                     key={column.key}
-                    onClick={() => handleSort(column.key as keyof ContactType)}
+                    onClick={() => handleSort(column.key as keyof ResEntryContactTypeDto)}
                     className="px-6 py-4 text-left text-sm font-semibold text-foreground cursor-pointer hover:text-accent transition-colors select-none"
                   >
                     <div className="flex items-center gap-1">
@@ -157,10 +129,10 @@ const ConntactTypeTable = () => {
                       index % 2 === 0 ? "bg-background/50" : "bg-muted/20"
                     }`}
                   >
-                    <td className="px-6 py-4 text-sm font-medium text-foreground">{type.id}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-foreground">{type.id.slice(0,6)}</td>
                     <td className="px-6 py-4 text-sm text-foreground font-medium">{type.detail}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{type.createdAt}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{type.updatedAt}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(type.createdAt)}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(type.updatedAt)}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button className="p-1 text-muted-foreground hover:text-accent transition-colors">
@@ -248,11 +220,11 @@ const ConntactTypeTable = () => {
                   <h3 className="font-semibold text-foreground text-lg">{type.detail}</h3>
                   <div className="flex items-center gap-2">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                      {type.id}
+                      {type.id.slice(0,6)}
                     </span>
                   </div>
-                  <p className="text-muted-foreground text-sm">Created: {type.createdAt}</p>
-                  <p className="text-muted-foreground text-sm">Updated: {type.updatedAt}</p>
+                  <p className="text-muted-foreground text-sm">Created: {formatDate(type.createdAt)}</p>
+                  <p className="text-muted-foreground text-sm">Updated: {formatDate(type.updatedAt)}</p>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
                   <button className="p-2 text-muted-foreground hover:text-accent hover:bg-accent/10 rounded-lg transition-colors">

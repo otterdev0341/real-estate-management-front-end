@@ -1,15 +1,35 @@
 "use client"
 
-import { useState } from "react"
+import { useExpenseTypeContext } from "@/context/store/ExpenseTypeStore"
+import * as React from "react"
+import { Check, ChevronsUpDown } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 interface CreateExpenseFormProps {
-  onSubmit: (expenseData: { detail: string; expenseType: string }) => void
+  onSuccess: () => void
   onCancel: () => void
 }
 
-const CreateExpenseForm = ({ onSubmit, onCancel }: CreateExpenseFormProps) => {
-  const [formData, setFormData] = useState({ detail: "", expenseType: "" })
-  const [validationErrors, setValidationErrors] = useState({ detail: "", expenseType: "" })
+const CreateExpenseForm = ({ onSuccess, onCancel }: CreateExpenseFormProps) => {
+  const { expenseTypes, loading } = useExpenseTypeContext()
+  const [formData, setFormData] = React.useState({ detail: "", expenseType: "" })
+  const [validationErrors, setValidationErrors] = React.useState({ detail: "", expenseType: "" })
+  const [expenseTypeOpen, setExpenseTypeOpen] = React.useState(false)
+  const [searchTerm, setSearchTerm] = React.useState("")
 
   const validateForm = () => {
     const errors = { detail: "", expenseType: "" }
@@ -25,9 +45,11 @@ const CreateExpenseForm = ({ onSubmit, onCancel }: CreateExpenseFormProps) => {
     return !errors.detail && !errors.expenseType
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) return
-    onSubmit(formData)
+    // Call your API here (ExpenseService.instance.createNewExpense(formData))
+    // If success:
+    onSuccess()
   }
 
   return (
@@ -53,23 +75,66 @@ const CreateExpenseForm = ({ onSubmit, onCancel }: CreateExpenseFormProps) => {
           />
           {validationErrors.detail && <p className="text-red-500 text-xs mt-1">{validationErrors.detail}</p>}
         </div>
-        {/* Expense Type */}
+        {/* Expense Type (Combobox with Popover & Command) */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">Expense Type *</label>
-          <input
-            type="text"
-            value={formData.expenseType}
-            onChange={(e) => {
-              setFormData({ ...formData, expenseType: e.target.value })
-              if (validationErrors.expenseType) {
-                setValidationErrors({ ...validationErrors, expenseType: "" })
-              }
-            }}
-            placeholder="e.g., Utilities"
-            className={`w-full px-3 py-2 bg-input border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground text-sm sm:text-base ${
-              validationErrors.expenseType ? "border-red-500" : "border-border"
-            }`}
-          />
+          <Popover open={expenseTypeOpen} onOpenChange={setExpenseTypeOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={expenseTypeOpen}
+                className={cn(
+                  "w-full justify-between",
+                  validationErrors.expenseType ? "border-red-500" : "border-border"
+                )}
+                disabled={loading}
+              >
+                {formData.expenseType
+                  ? expenseTypes.find((type) => type.id === formData.expenseType)?.detail
+                  : "Select or search expense type"}
+                <ChevronsUpDown className="opacity-50 ml-2 h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full min-w-[200px] p-0">
+              <Command>
+                <CommandInput
+                  placeholder="Search expense type..."
+                  className="h-9"
+                  value={searchTerm}
+                  onValueChange={setSearchTerm}
+                />
+                <CommandList>
+                  <CommandEmpty>No expense type found.</CommandEmpty>
+                  <CommandGroup>
+                    {expenseTypes
+                      .filter(type =>
+                        type.detail.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .map((type) => (
+                        <CommandItem
+                          key={type.id}
+                          value={type.id}
+                          onSelect={(currentValue) => {
+                            setFormData({ ...formData, expenseType: currentValue })
+                            setValidationErrors({ ...validationErrors, expenseType: "" })
+                            setExpenseTypeOpen(false)
+                          }}
+                        >
+                          {type.detail}
+                          <Check
+                            className={cn(
+                              "ml-auto",
+                              formData.expenseType === type.id ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                        </CommandItem>
+                      ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
           {validationErrors.expenseType && <p className="text-red-500 text-xs mt-1">{validationErrors.expenseType}</p>}
         </div>
       </div>

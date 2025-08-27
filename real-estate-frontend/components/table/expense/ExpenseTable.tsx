@@ -11,58 +11,24 @@ import {
 } from "@heroicons/react/24/outline"
 import Modal from "@/components/modal/Modal"
 import CreateExpenseForm from "@/components/form/expense/CreateExpenseForm"
-
-interface Expense {
-  id: string
-  detail: string
-  expenseType: string
-  amount: number
-  date: string
-  createdAt: string
-  updatedAt: string
-}
-
-const mockExpenses: Expense[] = [
-  {
-    id: "EX001",
-    detail: "Electricity bill for January",
-    expenseType: "Utilities",
-    amount: 120.5,
-    date: "2024-01-31",
-    createdAt: "2024-01-31",
-    updatedAt: "2024-02-01",
-  },
-  {
-    id: "EX002",
-    detail: "Annual property insurance",
-    expenseType: "Insurance",
-    amount: 800,
-    date: "2024-01-10",
-    createdAt: "2024-01-10",
-    updatedAt: "2024-01-11",
-  },
-  {
-    id: "EX003",
-    detail: "Plumbing maintenance",
-    expenseType: "Maintenance",
-    amount: 250,
-    date: "2024-01-20",
-    createdAt: "2024-01-20",
-    updatedAt: "2024-01-21",
-  },
-]
+import { useExpenseContext } from "@/context/store/ExpenseStore"
+import formatDate from "@/utility/utility"
+import { ExpenseService } from "@/service/expense/ExpenseService"
+import ResEntryExpenseDto from "@/domain/expense/ResEntryExpenseDto"
 
 const ExpenseTable = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(20)
-  const [sortColumn, setSortColumn] = useState<keyof Expense>("date")
+  const [sortColumn, setSortColumn] = useState<keyof ResEntryExpenseDto>("createdAt")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
-  const filteredExpenses = mockExpenses.filter((expense) =>
-    expense.detail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    expense.expenseType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const { expenses, refreshExpenses } = useExpenseContext()
+
+  const filteredExpenses = expenses.filter((expense) =>
+    expense.expense.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (expense.expenseType?.toLowerCase() ?? "").includes(searchTerm.toLowerCase()) ||
     expense.id.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
@@ -81,7 +47,7 @@ const ExpenseTable = () => {
   const startIndex = (currentPage - 1) * rowsPerPage
   const paginatedExpenses = sortedExpenses.slice(startIndex, startIndex + rowsPerPage)
 
-  const handleSort = (column: keyof Expense) => {
+  const handleSort = (column: keyof ResEntryExpenseDto) => {
     if (column === sortColumn) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc")
     } else {
@@ -90,9 +56,9 @@ const ExpenseTable = () => {
     }
   }
 
-  const handleCreateExpense = (expenseData: { detail: string; expenseType: string }) => {
-    // Add logic to update your data here
-    console.log("Creating new expense:", expenseData)
+  const handleCreateExpense = async (expenseData: { detail: string; expenseType: string }) => {
+    await ExpenseService.instance.createNewExpense(expenseData)
+    await refreshExpenses()
     setIsCreateModalOpen(false)
   }
 
@@ -137,14 +103,12 @@ const ExpenseTable = () => {
                   { key: "id", label: "ID" },
                   { key: "detail", label: "Detail" },
                   { key: "expenseType", label: "Type" },
-                  { key: "amount", label: "Amount" },
-                  { key: "date", label: "Date" },
                   { key: "createdAt", label: "Created At" },
                   { key: "updatedAt", label: "Updated At" },
                 ].map((column) => (
                   <th
                     key={column.key}
-                    onClick={() => handleSort(column.key as keyof Expense)}
+                    onClick={() => handleSort(column.key as keyof ResEntryExpenseDto)}
                     className="px-6 py-4 text-left text-sm font-semibold text-foreground cursor-pointer hover:text-accent transition-colors select-none"
                   >
                     <div className="flex items-center gap-1">
@@ -167,13 +131,11 @@ const ExpenseTable = () => {
                       index % 2 === 0 ? "bg-background/50" : "bg-muted/20"
                     }`}
                   >
-                    <td className="px-6 py-4 text-sm font-medium text-foreground">{expense.id}</td>
-                    <td className="px-6 py-4 text-sm text-foreground font-medium">{expense.detail}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-foreground">{expense.id.slice(0,6)}</td>
+                    <td className="px-6 py-4 text-sm text-foreground font-medium">{expense.expense}</td>
                     <td className="px-6 py-4 text-sm text-foreground">{expense.expenseType}</td>
-                    <td className="px-6 py-4 text-sm text-foreground">{expense.amount.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{expense.date}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{expense.createdAt}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{expense.updatedAt}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(expense.createdAt)}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(expense.updatedAt)}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button className="p-1 text-muted-foreground hover:text-accent transition-colors">
@@ -188,7 +150,7 @@ const ExpenseTable = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center">
+                  <td colSpan={6} className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
                         <MagnifyingGlassIcon className="w-6 h-6 text-muted-foreground" />
@@ -254,24 +216,24 @@ const ExpenseTable = () => {
           paginatedExpenses.map((expense) => (
             <div
               key={expense.id}
-              className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-4 shadow-lg hover:bg-white/15 transition-all duration-200"
+              className="bg-card/60 backdrop-blur-xl border border-border rounded-xl p-4 shadow-lg hover:bg-card/80 transition-all duration-200"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 space-y-2">
-                  <h3 className="font-semibold text-gray-900 text-lg">{expense.detail}</h3>
+                  <h3 className="font-semibold text-foreground text-lg">{expense.expense}</h3>
                   <div className="flex items-center gap-2">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
                       {expense.expenseType}
                     </span>
                   </div>
-                  <p className="text-gray-700 text-sm">Amount: {expense.amount.toLocaleString()}</p>
-                  <p className="text-gray-700 text-sm">Date: {expense.date}</p>
+                  <p className="text-muted-foreground text-sm">Created: {formatDate(expense.createdAt)}</p>
+                  <p className="text-muted-foreground text-sm">Updated: {formatDate(expense.updatedAt)}</p>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
-                  <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-lg transition-colors">
+                  <button className="p-2 text-muted-foreground hover:text-accent hover:bg-accent/10 rounded-lg transition-colors">
                     <PencilIcon className="w-5 h-5" />
                   </button>
-                  <button className="p-2 text-gray-600 hover:text-red-400 hover:bg-red-100 rounded-lg transition-colors">
+                  <button className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
                     <TrashIcon className="w-5 h-5" />
                   </button>
                 </div>
@@ -279,67 +241,31 @@ const ExpenseTable = () => {
             </div>
           ))
         ) : (
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-8 text-center">
+          <div className="bg-card/60 backdrop-blur-xl border border-border rounded-xl p-8 text-center">
             <div className="flex flex-col items-center gap-2">
-              <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                <MagnifyingGlassIcon className="w-6 h-6 text-gray-500" />
+              <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                <MagnifyingGlassIcon className="w-6 h-6 text-muted-foreground" />
               </div>
-              <p className="text-gray-700">No expenses found</p>
-              <p className="text-sm text-gray-500">Try adjusting your search</p>
-            </div>
-          </div>
-        )}
-
-        {/* Mobile Pagination */}
-        {paginatedExpenses.length > 0 && (
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm text-gray-700">
-                <span>Rows per page:</span>
-                <select
-                  value={rowsPerPage}
-                  onChange={(e) => {
-                    setRowsPerPage(Number(e.target.value))
-                    setCurrentPage(1)
-                  }}
-                  className="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-400"
-                >
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                </select>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-700">
-                  {startIndex + 1}-{Math.min(startIndex + rowsPerPage, sortedExpenses.length)} of{" "}
-                  {sortedExpenses.length}
-                </span>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                    className="p-1 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <ChevronLeftIcon className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                    disabled={currentPage === totalPages}
-                    className="p-1 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <ChevronRightIcon className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+              <p className="text-foreground">No expenses found</p>
+              <p className="text-sm text-muted-foreground">Try adjusting your search</p>
             </div>
           </div>
         )}
       </div>
 
       {/* Create Expense Modal */}
-      <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create New Expense">
-        <CreateExpenseForm onSubmit={handleCreateExpense} onCancel={() => setIsCreateModalOpen(false)} />
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        title="Create New Expense"
+      >
+        <CreateExpenseForm
+          onSuccess={async () => {
+            await refreshExpenses()
+            setIsCreateModalOpen(false)
+          }}
+          onCancel={() => setIsCreateModalOpen(false)}
+        />
       </Modal>
     </div>
   )

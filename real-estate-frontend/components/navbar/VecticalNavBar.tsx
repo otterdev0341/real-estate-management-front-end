@@ -1,7 +1,7 @@
 "use client"
 
-import type React from "react"
-import { useRouter } from "next/navigation"
+import React from "react"
+import { useRouter, usePathname } from "next/navigation"
 
 import { useState, useRef } from "react"
 import {
@@ -34,7 +34,12 @@ const navigationItems = [
 ]
 
 export function VerticalNavbar() {
-  const [activeItem, setActiveItem] = useState("Dashboard")
+  const pathname = usePathname()
+  // Find the item that matches the current path
+  const initialActiveItem =
+    navigationItems.find(item => item.href === pathname)?.name || "Dashboard"
+
+  const [activeItem, setActiveItem] = useState(initialActiveItem)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
@@ -59,20 +64,40 @@ export function VerticalNavbar() {
   const handleAvatarClick = (event: React.MouseEvent) => {
     if (avatarRef.current) {
       const rect = avatarRef.current.getBoundingClientRect()
-      setDropdownPosition({
-        top: rect.top + rect.height + 8,
-        left: rect.left + rect.width / 2,
-      })
+      const viewportHeight = window.innerHeight
+      const viewportWidth = window.innerWidth
+      
+      // Calculate position to ensure dropdown stays within viewport
+      let top = rect.top + rect.height + 8
+      let left = rect.left + rect.width + 8
+      
+      // Adjust if dropdown would go off screen
+      if (top + 200 > viewportHeight) { // Assuming dropdown height ~200px
+        top = rect.top - 200 - 8
+      }
+      
+      if (left + 200 > viewportWidth) { // Assuming dropdown width ~200px
+        left = rect.left - 200 - 8
+      }
+      
+      setDropdownPosition({ top, left })
     }
     setIsUserDropdownOpen(!isUserDropdownOpen)
   }
 
+  // Update activeItem when pathname changes
+  React.useEffect(() => {
+    const matchedItem =
+      navigationItems.find(item => item.href === pathname)?.name || "Dashboard"
+    setActiveItem(matchedItem)
+  }, [pathname])
+
   return (
     <>
       {/* Desktop Navbar */}
-      <div className="hidden lg:flex w-20 bg-white/10 backdrop-blur-xl border-r border-white/20 min-h-screen flex-col items-center py-6 shadow-2xl">
+      <div className="hidden lg:flex w-20 bg-white/10 backdrop-blur-xl border-r border-white/20 min-h-screen flex-col items-center py-6 shadow-2xl fixed left-0 top-0 z-30">
         {/* Navigation Items */}
-        <div className="flex flex-col space-y-4 flex-1">
+        <div className="flex flex-col space-y-4 flex-1 overflow-y-auto scrollbar-hide">
           {navigationItems.map((item, index) => {
             const Icon = item.icon
             const itemName = item.name || "Dashboard"
@@ -108,18 +133,23 @@ export function VerticalNavbar() {
           })}
         </div>
 
-        {/* User Info Section - styled as navigation item */}
-        <div className="flex-shrink-0">
+        {/* User Info Section - Fixed at bottom */}
+        <div className="flex-shrink-0 mt-4">
           <button
             ref={avatarRef}
             onClick={handleAvatarClick}
             className={`
-              p-3 rounded-xl transition-all duration-300 backdrop-blur-sm
+              p-3 rounded-xl transition-all duration-300 backdrop-blur-sm group relative
               text-gray-700 hover:bg-blue-500/20 hover:text-blue-800 border border-transparent hover:border-blue-300/30 bg-white/40
             `}
           >
             <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center">
               <span className="text-white text-xs font-semibold">JD</span>
+            </div>
+            
+            {/* Tooltip for desktop */}
+            <div className="absolute left-full ml-2 px-3 py-2 bg-white text-black text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap z-10 shadow-2xl border border-gray-200">
+              Profile
             </div>
           </button>
         </div>
@@ -129,7 +159,11 @@ export function VerticalNavbar() {
       <div className="lg:hidden fixed top-4 left-4 z-50">
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-3 bg-white/15 backdrop-blur-xl rounded-xl shadow-xl hover:bg-white/25 transition-all duration-300 border border-white/30"
+          className={`p-3 rounded-xl shadow-xl transition-all duration-300 border ${
+            isMobileMenuOpen
+              ? "bg-white/25 border-white/30 backdrop-blur-xl"
+              : "bg-white/5 border-white/40 "
+          }`}
         >
           {isMobileMenuOpen ? (
             <XMarkIcon className="w-6 h-6 text-white" />
@@ -191,7 +225,7 @@ export function VerticalNavbar() {
             </div>
 
             {/* User Info Section - styled as navigation item */}
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 border-t border-white/20 pt-4">
               <button
                 onClick={handleAvatarClick}
                 className={`

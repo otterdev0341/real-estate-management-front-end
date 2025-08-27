@@ -2,19 +2,20 @@
 
 import { useState } from "react"
 import { ExpenseTypeService } from "@/service/expense/ExpenseTypeService"
-import Either, { isLeft } from "@/implementation/Either"
+import { isLeft } from "@/implementation/Either"
 import { ServiceError } from "@/implementation/ServiceError"
-import ResEntryExpenseTypeDto from "@/domain/expense/ResEntryExpenseTypeDto"
-import { AlertCircle, Loader2 } from "lucide-react"
-import { CheckCircle } from "lucide-react"
+import ReqUpdateExpenseTypeDto from "@/domain/expense/ReqUpdateExpenseTypeDto"
+import { AlertCircle, Loader2, CheckCircle } from "lucide-react"
 
-interface CreateExpenseTypeFormProps {
-  onSubmit: (expenseTypeData: { detail: string }) => void
+interface UpdateExpenseTypeFormProps {
+  id: string
+  detail: string
+  onSubmit: (updated: { id: string; detail: string }) => void
   onCancel: () => void
 }
 
-const CreateExpenseTypeForm = ({ onSubmit, onCancel }: CreateExpenseTypeFormProps) => {
-  const [formData, setFormData] = useState({ detail: "" })
+const UpdateExpenseTypeForm = ({ id, detail, onSubmit, onCancel }: UpdateExpenseTypeFormProps) => {
+  const [formData, setFormData] = useState({ id, detail })
   const [validationErrors, setValidationErrors] = useState({ detail: "" })
   const [errorLabel, setErrorLabel] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -36,33 +37,33 @@ const CreateExpenseTypeForm = ({ onSubmit, onCancel }: CreateExpenseTypeFormProp
     setIsClosing(true)
     setTimeout(() => {
       onCancel()
-    }, 300) // Match the fade-out duration
+    }, 300)
   }
 
   const handleSuccessClose = () => {
     setIsClosing(true)
     setTimeout(() => {
       onSubmit(formData)
-    }, 300) // Match the fade-out duration
+    }, 300)
   }
+
   const handleSubmit = async () => {
     setErrorLabel("")
     if (!validateForm()) return
     setIsSubmitting(true)
-    
     try {
-      const result: Either<ServiceError, ResEntryExpenseTypeDto> = await ExpenseTypeService.instance.createNewExpenseType(formData)
-      
+      const result = await ExpenseTypeService.instance.updateExpenseType({
+        id: formData.id,
+        detail: formData.detail,
+      } as ReqUpdateExpenseTypeDto)
+
       if (isLeft(result)) {
-        setErrorLabel(result.value.message || "Failed to create expense type")
+        setErrorLabel(result.value.message || "Failed to update expense type")
         setIsSubmitting(false)
         return
       }
-      
       setIsSubmitting(false)
       setIsSuccess(true)
-      
-      // Auto-close after showing success for 1.5 seconds
       setTimeout(() => {
         handleSuccessClose()
       }, 1500)
@@ -83,7 +84,7 @@ const CreateExpenseTypeForm = ({ onSubmit, onCancel }: CreateExpenseTypeFormProp
             </div>
             <div className="text-center">
               <h3 className="text-lg font-semibold text-gray-900 mb-1">Success!</h3>
-              <p className="text-sm text-gray-600">Expense type "{formData.detail}" has been created</p>
+              <p className="text-sm text-gray-600">Expense type has been updated</p>
             </div>
           </div>
         </div>
@@ -97,13 +98,24 @@ const CreateExpenseTypeForm = ({ onSubmit, onCancel }: CreateExpenseTypeFormProp
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
             </svg>
-            <span className="text-sm font-medium text-gray-700">Creating expense type...</span>
+            <span className="text-sm font-medium text-gray-700">Updating expense type...</span>
           </div>
         </div>
       )}
 
       {/* Form Content */}
       <div className={`space-y-4 transition-opacity duration-200 ${isSuccess ? 'opacity-30' : 'opacity-100'}`}>
+        {/* Expense Type ID */}
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">Expense Type ID</label>
+          <input
+            type="text"
+            value={formData.id}
+            readOnly
+            className="w-full px-3 py-2 bg-gray-100 border border-border rounded-lg text-muted-foreground text-sm sm:text-base opacity-70"
+            disabled
+          />
+        </div>
         {/* Expense Type Name */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">Expense Type Name *</label>
@@ -152,15 +164,15 @@ const CreateExpenseTypeForm = ({ onSubmit, onCancel }: CreateExpenseTypeFormProp
         <button
           onClick={handleSubmit}
           disabled={!formData.detail.trim() || isSubmitting || isSuccess}
-          className="px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2 flex items-center justify-center min-w-[160px]"
+          className="px-4 py-2 bg-yellow-200 text-yellow-900 rounded-lg hover:bg-yellow-300 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2 flex items-center justify-center min-w-[160px]"
         >
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Creating...
+              Updating...
             </>
           ) : (
-            "Create Expense Type"
+            "Update"
           )}
         </button>
       </div>
@@ -168,4 +180,4 @@ const CreateExpenseTypeForm = ({ onSubmit, onCancel }: CreateExpenseTypeFormProp
   )
 }
 
-export default CreateExpenseTypeForm
+export default UpdateExpenseTypeForm

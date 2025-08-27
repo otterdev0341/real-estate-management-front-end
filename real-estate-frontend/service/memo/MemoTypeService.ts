@@ -5,18 +5,18 @@ import { BaseService } from "../base/BaseService"
 import { CreateFailed, FetchFailed, ServiceError, Unauthorized } from "@/implementation/ServiceError"
 import { BaseQuery } from "@/domain/utility/BaseQueryDto"
 
-export class MemoService extends BaseService {
-  private static _memoInstance: MemoService
+export class MemoTypeService extends BaseService {
+  private static _memoInstance: MemoTypeService
 
   private constructor() {
     super()
   }
 
-  public static get instance(): MemoService {
-    if (!MemoService._memoInstance) {
-      MemoService._memoInstance = new MemoService()
+  public static get instance(): MemoTypeService {
+    if (!MemoTypeService._memoInstance) {
+      MemoTypeService._memoInstance = new MemoTypeService()
     }
-    return MemoService._memoInstance
+    return MemoTypeService._memoInstance
   }
 
   // if create success refresh memo type in store
@@ -74,9 +74,12 @@ export class MemoService extends BaseService {
             }
             return left(FetchFailed.create("MemoService", `Failed to fetch memo types: ${res.statusText}`, new Error(res.statusText)));
         }
-    
-        const responseData: ResEntryMemoTypeDto[] = await res.json();
-        return right(responseData);
+        
+        const json = await res.json();
+        
+        const items: ResEntryMemoTypeDto[] = json.data?.items ?? [];
+        
+        return right(items);
         } catch (error) {
         // In case of a network error or other unexpected issue
         return left(FetchFailed.create("MemoService", "An unexpected error occurred during fetching memo types.", error));

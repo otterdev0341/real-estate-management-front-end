@@ -12,66 +12,25 @@ import {
 } from "@heroicons/react/24/outline"
 import Modal from "@/components/modal/Modal"
 import CreatePropertyTypeForm from "@/components/form/property/CreatePropertyTypeForm"
+import { usePropertyTypeContext } from "@/context/store/PropertyTypeStore"
+import formatDate from "@/utility/utility"
+import { PropertyTypeService } from "@/service/property/PropertyTypeService"
+import ResEntryPropertyTypeDto from "@/domain/property/propertyType/ResEntryPropertyTypeDto"
 
-interface PropertyType {
-  id: string
-  name: string
-  description: string
-  propertyCount: number
-  createdAt: string
-  updatedAt: string
-}
-
-const mockPropertyTypes: PropertyType[] = [
-  {
-    id: "PT001",
-    name: "Apartment",
-    description: "Multi-unit residential building",
-    propertyCount: 15,
-    createdAt: "2024-01-01",
-    updatedAt: "2024-01-15",
-  },
-  {
-    id: "PT002",
-    name: "House",
-    description: "Single-family residential property",
-    propertyCount: 8,
-    createdAt: "2024-01-02",
-    updatedAt: "2024-01-16",
-  },
-  {
-    id: "PT003",
-    name: "Villa",
-    description: "Luxury residential property with amenities",
-    propertyCount: 3,
-    createdAt: "2024-01-03",
-    updatedAt: "2024-01-17",
-  },
-  {
-    id: "PT004",
-    name: "Commercial",
-    description: "Business and retail properties",
-    propertyCount: 5,
-    createdAt: "2024-01-04",
-    updatedAt: "2024-01-18",
-  },
-]
-
-export default function PropertyTypeTable() {
+const PropertyTypeTable = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(20)
-  const [sortColumn, setSortColumn] = useState<keyof PropertyType>("name")
+  const [sortColumn, setSortColumn] = useState<keyof ResEntryPropertyTypeDto>("detail")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
-  const filteredPropertyTypes = mockPropertyTypes.filter((type) => {
-    const matchesSearch =
-      type.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      type.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      type.id.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesSearch
-  })
+  const { propertyTypes, refreshPropertyTypes } = usePropertyTypeContext()
+
+  const filteredPropertyTypes = propertyTypes.filter((type) =>
+    type.detail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    type.id.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   const sortedPropertyTypes = [...filteredPropertyTypes].sort((a, b) => {
     const aValue = a[sortColumn]
@@ -88,7 +47,7 @@ export default function PropertyTypeTable() {
   const startIndex = (currentPage - 1) * rowsPerPage
   const paginatedPropertyTypes = sortedPropertyTypes.slice(startIndex, startIndex + rowsPerPage)
 
-  const handleSort = (column: keyof PropertyType) => {
+  const handleSort = (column: keyof ResEntryPropertyTypeDto) => {
     if (column === sortColumn) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc")
     } else {
@@ -97,9 +56,9 @@ export default function PropertyTypeTable() {
     }
   }
 
-  const handleCreateType = (typeData: { detail: string }) => {
-    // Add logic to update your data here
-    console.log("Creating new property type:", typeData)
+  const handleCreateType = async (typeData: { detail: string }) => {
+    await PropertyTypeService.instance.createNewPropertyType(typeData)
+    await refreshPropertyTypes()
     setIsCreateModalOpen(false)
   }
 
@@ -142,15 +101,13 @@ export default function PropertyTypeTable() {
               <tr className="bg-muted/50 backdrop-blur-sm border-b border-border">
                 {[
                   { key: "id", label: "ID" },
-                  { key: "name", label: "Name" },
-                  { key: "description", label: "Description" },
-                  { key: "propertyCount", label: "Properties" },
+                  { key: "detail", label: "Detail" },
                   { key: "createdAt", label: "Created At" },
                   { key: "updatedAt", label: "Updated At" },
                 ].map((column) => (
                   <th
                     key={column.key}
-                    onClick={() => handleSort(column.key as keyof PropertyType)}
+                    onClick={() => handleSort(column.key as keyof ResEntryPropertyTypeDto)}
                     className="px-6 py-4 text-left text-sm font-semibold text-foreground cursor-pointer hover:text-accent transition-colors select-none"
                   >
                     <div className="flex items-center gap-1">
@@ -173,16 +130,10 @@ export default function PropertyTypeTable() {
                       index % 2 === 0 ? "bg-background/50" : "bg-muted/20"
                     }`}
                   >
-                    <td className="px-6 py-4 text-sm font-medium text-foreground">{type.id}</td>
-                    <td className="px-6 py-4 text-sm text-foreground font-medium">{type.name}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{type.description}</td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                        {type.propertyCount} properties
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{type.createdAt}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{type.updatedAt}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-foreground">{type.id.slice(0,6)}</td>
+                    <td className="px-6 py-4 text-sm text-foreground font-medium">{type.detail}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(type.createdAt)}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(type.updatedAt)}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button className="p-1 text-muted-foreground hover:text-accent transition-colors">
@@ -200,7 +151,7 @@ export default function PropertyTypeTable() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
+                  <td colSpan={5} className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
                         <MagnifyingGlassIcon className="w-6 h-6 text-muted-foreground" />
@@ -270,13 +221,14 @@ export default function PropertyTypeTable() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 space-y-2">
-                  <h3 className="font-semibold text-foreground text-lg">{type.name}</h3>
-                  <p className="text-muted-foreground text-sm">{type.description}</p>
+                  <h3 className="font-semibold text-foreground text-lg">{type.detail}</h3>
                   <div className="flex items-center gap-2">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                      {type.propertyCount} properties
+                      {type.id.slice(0,6)}
                     </span>
                   </div>
+                  <p className="text-muted-foreground text-sm">Created: {formatDate(type.createdAt)}</p>
+                  <p className="text-muted-foreground text-sm">Updated: {formatDate(type.updatedAt)}</p>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
                   <button className="p-2 text-muted-foreground hover:text-accent hover:bg-accent/10 rounded-lg transition-colors">
@@ -309,3 +261,5 @@ export default function PropertyTypeTable() {
     </div>
   )
 }
+
+export default PropertyTypeTable

@@ -2,6 +2,7 @@
 import { ReactNode } from "react";
 import "./globals.css";
 import { Metadata } from "next";
+import ServiceProvider from "@/context/provider/ServiceProvider";
 
 
 export const metadata: Metadata = {
@@ -11,12 +12,12 @@ export const metadata: Metadata = {
 };
 
 const layout = ({ children }: {children: ReactNode}) => {
-  return (
+   return (
     <html lang="en">
-      <head>
-      </head>
       <body>
-        {children}
+        <ServiceProvider>
+          {children}
+        </ServiceProvider>
       </body>
     </html>
   )
