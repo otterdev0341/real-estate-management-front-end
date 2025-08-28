@@ -64,22 +64,10 @@ export function VerticalNavbar() {
   const handleAvatarClick = (event: React.MouseEvent) => {
     if (avatarRef.current) {
       const rect = avatarRef.current.getBoundingClientRect()
-      const viewportHeight = window.innerHeight
-      const viewportWidth = window.innerWidth
-      
-      // Calculate position to ensure dropdown stays within viewport
-      let top = rect.top + rect.height + 8
-      let left = rect.left + rect.width + 8
-      
-      // Adjust if dropdown would go off screen
-      if (top + 200 > viewportHeight) { // Assuming dropdown height ~200px
-        top = rect.top - 200 - 8
-      }
-      
-      if (left + 200 > viewportWidth) { // Assuming dropdown width ~200px
-        left = rect.left - 200 - 8
-      }
-      
+      // Position dropdown to the right of avatar, vertically centered
+      const top = rect.top + rect.height / 2
+      const left = rect.right + 12 // 12px margin from avatar
+
       setDropdownPosition({ top, left })
     }
     setIsUserDropdownOpen(!isUserDropdownOpen)

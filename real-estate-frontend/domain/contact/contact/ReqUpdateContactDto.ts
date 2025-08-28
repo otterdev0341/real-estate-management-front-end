@@ -1,4 +1,5 @@
-export interface ReqCreateContactDto {
+export interface ReqUpdateContactDto {
+  id: string;
   businessName: string;
   internalName?: string;
   detail?: string;

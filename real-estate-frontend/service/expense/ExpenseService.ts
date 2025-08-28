@@ -3,6 +3,7 @@ import { BaseService } from "../base/BaseService"
 import { CreateFailed, FetchFailed, ServiceError, Unauthorized } from "@/implementation/ServiceError"
 import { BaseQuery } from "@/domain/utility/BaseQueryDto"
 import ResEntryExpenseDto from "@/domain/expense/ResEntryExpenseDto"
+import ReqUpdateExpenseDto from "@/domain/expense/ReqUpdateExpenseDto"
 
 export class ExpenseService extends BaseService {
   private static _expenseInstance: ExpenseService
@@ -109,7 +110,7 @@ export class ExpenseService extends BaseService {
     }
   }
 
-  async updateExpense(id: string, data: { detail: string; expenseType: string }): Promise<Either<ServiceError, ResEntryExpenseDto>> {
+  async updateExpense(id: string, data: ReqUpdateExpenseDto): Promise<Either<ServiceError, ResEntryExpenseDto>> {
     try {
       if (!this.isTokenExist()) {
         return left(Unauthorized.create("ExpenseService", "No authentication token found."));

@@ -6,38 +6,62 @@ import { isLeft } from "@/implementation/Either"
 import { AlertCircle, Loader2, CheckCircle } from "lucide-react"
 import { useContactTypeContext } from "@/context/store/ContactTypeStore"
 import CommonSelect, { CommonSelectItem } from "@/components/options/CommonSelect"
-import { ReqCreateContactDto } from "@/domain/contact/contact/ReqCreateContactDto"
+import { ReqUpdateContactDto } from "@/domain/contact/contact/ReqUpdateContactDto"
 
-interface CreateContactFormProps {
-  onSuccess: () => void
+interface UpdateContactFormProps {
+  id: string
+  businessName: string
+  internalName?: string
+  detail?: string
+  note?: string
+  contactType: string
+  address?: string
+  phone?: string
+  mobilePhone?: string
+  line?: string
+  email?: string
   onCancel: () => void
+  onSuccess: () => void
 }
 
-const initialState: ReqCreateContactDto = {
-  businessName: "",
-  internalName: "",
-  detail: "",
-  note: "",
-  contactType: "",
-  address: "",
-  phone: "",
-  mobilePhone: "",
-  line: "",
-  email: "",
-}
-
-const CreateContactForm = ({ onSuccess, onCancel }: CreateContactFormProps) => {
-  const { contactTypes, loading } = useContactTypeContext()
-  const [formData, setFormData] = useState(initialState)
+const UpdateContactForm = ({
+  id,
+  businessName,
+  internalName = "",
+  detail = "",
+  note = "",
+  contactType,
+  address = "",
+  phone = "",
+  mobilePhone = "",
+  line = "",
+  email = "",
+  onCancel,
+  onSuccess,
+}: UpdateContactFormProps) => {
+  const { contactTypes } = useContactTypeContext()
+  const [formData, setFormData] = useState<ReqUpdateContactDto>({
+    id,
+    businessName,
+    internalName,
+    detail,
+    note,
+    contactType,
+    address,
+    phone,
+    mobilePhone,
+    line,
+    email,
+  })
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({})
+  const [errorLabel, setErrorLabel] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
-  const [errorLabel, setErrorLabel] = useState("")
 
   const contactTypeOptions: CommonSelectItem[] = contactTypes.map(type => ({
     id: type.id,
-    value: type.id,
+    value: type.detail,
     label: type.detail,
   }))
 
@@ -83,9 +107,9 @@ const CreateContactForm = ({ onSuccess, onCancel }: CreateContactFormProps) => {
     if (!validateForm()) return
     setIsSubmitting(true)
     try {
-      const result = await ContactService.instance.createNewContact(formData)
+      const result = await ContactService.instance.updateContact(formData)
       if (isLeft(result)) {
-        setErrorLabel(result.value.message || "Failed to create contact")
+        setErrorLabel(result.value.message || "Failed to update contact")
         setIsSubmitting(false)
         return
       }
@@ -111,7 +135,7 @@ const CreateContactForm = ({ onSuccess, onCancel }: CreateContactFormProps) => {
             </div>
             <div className="text-center">
               <h3 className="text-lg font-semibold text-gray-900 mb-1">Success!</h3>
-              <p className="text-sm text-gray-600">Contact "{formData.businessName}" has been created</p>
+              <p className="text-sm text-gray-600">Contact has been updated</p>
             </div>
           </div>
         </div>
@@ -122,13 +146,25 @@ const CreateContactForm = ({ onSuccess, onCancel }: CreateContactFormProps) => {
         <div className="absolute inset-0 bg-white/50 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
           <div className="bg-white rounded-lg shadow-lg p-4 flex items-center space-x-3">
             <Loader2 className="w-5 h-5 mr-2 text-blue-600 animate-spin" />
-            <span className="text-sm font-medium text-gray-700">Creating contact...</span>
+            <span className="text-sm font-medium text-gray-700">Updating contact...</span>
           </div>
         </div>
       )}
 
       {/* Form Content */}
       <div className={`space-y-4 transition-opacity duration-200 ${isSuccess ? 'opacity-30' : 'opacity-100'}`}>
+        {/* Contact ID */}
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">Contact ID</label>
+          <input
+            type="text"
+            value={formData.id}
+            readOnly
+            className="w-full px-3 py-2 bg-gray-100 border border-border rounded-lg text-muted-foreground text-sm sm:text-base opacity-70"
+            disabled
+          />
+        </div>
+        {/* Business Name */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">Business Name *</label>
           <input
@@ -136,50 +172,56 @@ const CreateContactForm = ({ onSuccess, onCancel }: CreateContactFormProps) => {
             name="businessName"
             value={formData.businessName}
             onChange={handleChange}
-            placeholder="Acme Inc."
+            placeholder="Business Name"
             className={`w-full px-3 py-2 bg-input border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground text-sm sm:text-base ${
               validationErrors.businessName ? "border-red-500" : "border-border"
             }`}
             disabled={isSubmitting || isSuccess}
           />
-          {validationErrors.businessName && <p className="text-red-500 text-xs mt-1">{validationErrors.businessName}</p>}
+          {validationErrors.businessName && (
+            <p className="text-red-500 text-xs mt-1">{validationErrors.businessName}</p>
+          )}
         </div>
+        {/* Internal Name */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">Internal Name</label>
           <input
             type="text"
             name="internalName"
-            value={formData.internalName}
+            value={formData.internalName || ""}
             onChange={handleChange}
-            placeholder="ACME"
+            placeholder="Internal Name"
             className="w-full px-3 py-2 bg-input border border-border rounded-lg"
             disabled={isSubmitting || isSuccess}
           />
         </div>
+        {/* Detail */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">Detail</label>
           <textarea
             name="detail"
-            value={formData.detail}
+            value={formData.detail || ""}
             onChange={handleChange}
-            placeholder="Long-term client for software services."
+            placeholder="Detail"
             className="w-full px-3 py-2 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground text-sm sm:text-base"
             rows={2}
             disabled={isSubmitting || isSuccess}
           />
         </div>
+        {/* Note */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">Note</label>
           <input
             type="text"
             name="note"
-            value={formData.note}
+            value={formData.note || ""}
             onChange={handleChange}
-            placeholder="Initial contact made via LinkedIn."
+            placeholder="Note"
             className="w-full px-3 py-2 bg-input border border-border rounded-lg"
             disabled={isSubmitting || isSuccess}
           />
         </div>
+        {/* Contact Type */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">Contact Type *</label>
           <CommonSelect
@@ -187,75 +229,79 @@ const CreateContactForm = ({ onSuccess, onCancel }: CreateContactFormProps) => {
             defaultValue={formData.contactType}
             onSelect={handleContactTypeSelect}
             placeholder="Select or search contact type"
-            disabled={loading || isSubmitting || isSuccess}
+            disabled={isSubmitting || isSuccess}
           />
-          {validationErrors.contactType && <p className="text-red-500 text-xs mt-1">{validationErrors.contactType}</p>}
+          {validationErrors.contactType && (
+            <p className="text-red-500 text-xs mt-1">{validationErrors.contactType}</p>
+          )}
         </div>
+        {/* Address */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">Address</label>
           <input
             type="text"
             name="address"
-            value={formData.address}
+            value={formData.address || ""}
             onChange={handleChange}
-            placeholder="123 Main Street, Anytown, USA 12345"
+            placeholder="Address"
             className="w-full px-3 py-2 bg-input border border-border rounded-lg"
             disabled={isSubmitting || isSuccess}
           />
         </div>
+        {/* Phone */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">Phone</label>
           <input
             type="text"
             name="phone"
-            value={formData.phone}
+            value={formData.phone || ""}
             onChange={handleChange}
-            placeholder="555-123-4567"
+            placeholder="Phone"
             className="w-full px-3 py-2 bg-input border border-border rounded-lg"
             disabled={isSubmitting || isSuccess}
           />
         </div>
+        {/* Mobile Phone */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">Mobile Phone</label>
           <input
             type="text"
             name="mobilePhone"
-            value={formData.mobilePhone}
+            value={formData.mobilePhone || ""}
             onChange={handleChange}
-            placeholder="555-987-6543"
+            placeholder="Mobile Phone"
             className="w-full px-3 py-2 bg-input border border-border rounded-lg"
             disabled={isSubmitting || isSuccess}
           />
         </div>
+        {/* Line */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">Line</label>
           <input
             type="text"
             name="line"
-            value={formData.line}
+            value={formData.line || ""}
             onChange={handleChange}
-            placeholder="acme_line_id"
+            placeholder="Line"
             className="w-full px-3 py-2 bg-input border border-border rounded-lg"
             disabled={isSubmitting || isSuccess}
           />
         </div>
+        {/* Email */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">Email</label>
           <input
             type="email"
             name="email"
-            value={formData.email}
+            value={formData.email || ""}
             onChange={handleChange}
-            placeholder="contact@acme.com"
-            className={`w-full px-3 py-2 bg-input border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground text-sm sm:text-base ${
-              validationErrors.email ? "border-red-500" : "border-border"
-            }`}
+            placeholder="Email"
+            className="w-full px-3 py-2 bg-input border border-border rounded-lg"
             disabled={isSubmitting || isSuccess}
           />
-          {validationErrors.email && <p className="text-red-500 text-xs mt-1">{validationErrors.email}</p>}
         </div>
         {errorLabel && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-2">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
             <p className="flex items-center text-red-600 text-sm">
               <AlertCircle className="w-4 h-4 mr-2 text-red-500" />
               {errorLabel}
@@ -263,6 +309,7 @@ const CreateContactForm = ({ onSuccess, onCancel }: CreateContactFormProps) => {
           </div>
         )}
       </div>
+
       {/* Form Footer */}
       <div className={`flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 mt-6 transition-opacity duration-200 ${isSuccess ? 'opacity-30' : 'opacity-100'}`}>
         <button
@@ -280,15 +327,15 @@ const CreateContactForm = ({ onSuccess, onCancel }: CreateContactFormProps) => {
             isSubmitting ||
             isSuccess
           }
-          className="px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2 flex items-center justify-center min-w-[160px]"
+          className="px-4 py-2 bg-yellow-200 text-yellow-900 rounded-lg hover:bg-yellow-300 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2 flex items-center justify-center min-w-[160px]"
         >
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Creating...
+              Updating...
             </>
           ) : (
-            "Create Contact"
+            "Update"
           )}
         </button>
       </div>
@@ -296,4 +343,4 @@ const CreateContactForm = ({ onSuccess, onCancel }: CreateContactFormProps) => {
   )
 }
 
-export default CreateContactForm
+export default UpdateContactForm

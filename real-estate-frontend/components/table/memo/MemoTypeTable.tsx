@@ -11,18 +11,26 @@ import {
 } from "@heroicons/react/24/outline"
 import Modal from "@/components/modal/Modal"
 import CreateMemoTypeForm from "@/components/form/memo/CreateMemoTypeForm"
-import { ResEntryMemoTypeDto } from "@/domain/memo/ResEntryMemoTypeDto"
-import { MemoTypeService } from "@/service/memo/MemoTypeService"
+import UpdateMemoTypeForm from "@/components/form/memo/UpdateMemoTypeForm"
+import CommonDeleteForm from "@/components/form/delete/CommonDeleteForm"
 import { useMemoTypeContext } from "@/context/store/MemoTypeStore"
+import { MemoTypeService } from "@/service/memo/MemoTypeService"
 import formatDate from "@/utility/utility"
+import { isLeft } from "@/implementation/Either"
 
 const MemoTypeTable = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(20)
-  const [sortColumn, setSortColumn] = useState<keyof ResEntryMemoTypeDto>("detail")
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState("")
+
+  const [editId, setEditId] = useState<string | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editDetail, setEditDetail] = useState<string>("")
 
   const { memoTypes, refreshMemoTypes } = useMemoTypeContext()
 
@@ -32,13 +40,8 @@ const MemoTypeTable = () => {
   )
 
   const sortedMemoTypes = [...filteredMemoTypes].sort((a, b) => {
-    const aValue = a[sortColumn]
-    const bValue = b[sortColumn]
-    if (aValue === undefined && bValue === undefined) return 0
-    if (aValue === undefined) return sortDirection === "asc" ? 1 : -1
-    if (bValue === undefined) return sortDirection === "asc" ? -1 : 1
-    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1
-    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1
+    if (a.detail < b.detail) return -1
+    if (a.detail > b.detail) return 1
     return 0
   })
 
@@ -46,20 +49,59 @@ const MemoTypeTable = () => {
   const startIndex = (currentPage - 1) * rowsPerPage
   const paginatedMemoTypes = sortedMemoTypes.slice(startIndex, startIndex + rowsPerPage)
 
-  const handleSort = (column: keyof ResEntryMemoTypeDto) => {
-    if (column === sortColumn) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
-    } else {
-      setSortColumn(column)
-      setSortDirection("asc")
-    }
-  }
-
   const handleCreateMemoType = async (memoTypeData: { detail: string }) => {
-    // Call create and refresh
     await MemoTypeService.instance.createNewMemoType(memoTypeData)
     await refreshMemoTypes()
     setIsCreateModalOpen(false)
+  }
+
+  const handleDeleteClick = (id: string) => {
+    setDeleteId(id)
+    setIsDeleteModalOpen(true)
+    setDeleteError("")
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return
+    setIsDeleting(true)
+    setDeleteError("")
+    const result = await MemoTypeService.instance.deleteMemoType(deleteId)
+    setIsDeleting(false)
+    if (result && "isLeft" in result && isLeft(result)) {
+      setDeleteError(result.value.message || "Failed to delete memo type")
+      return
+    }
+    setIsDeleteModalOpen(false)
+    setDeleteId(null)
+    await refreshMemoTypes()
+  }
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false)
+    setDeleteId(null)
+    setDeleteError("")
+  }
+
+  const handleEditClick = (id: string) => {
+    const memoType = memoTypes.find(e => e.id === id)
+    if (memoType) {
+      setEditId(id)
+      setEditDetail(memoType.detail)
+      setIsEditModalOpen(true)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditModalOpen(false)
+    setEditId(null)
+    setEditDetail("")
+  }
+
+  const handleUpdateMemoType = async () => {
+    await refreshMemoTypes()
+    setIsEditModalOpen(false)
+    setEditId(null)
+    setEditDetail("")
   }
 
   return (
@@ -99,25 +141,10 @@ const MemoTypeTable = () => {
           <table className="w-full">
             <thead>
               <tr className="bg-muted/50 backdrop-blur-sm border-b border-border">
-                {[
-                  { key: "id", label: "ID" },
-                  { key: "detail", label: "Detail" },
-                  { key: "createdAt", label: "Created At" },
-                  { key: "updatedAt", label: "Updated At" },
-                ].map((column) => (
-                  <th
-                    key={column.key}
-                    onClick={() => handleSort(column.key as keyof ResEntryMemoTypeDto)}
-                    className="px-6 py-4 text-left text-sm font-semibold text-foreground cursor-pointer hover:text-accent transition-colors select-none"
-                  >
-                    <div className="flex items-center gap-1">
-                      {column.label}
-                      {sortColumn === column.key && (
-                        <span className="text-accent">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                      )}
-                    </div>
-                  </th>
-                ))}
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">ID</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Detail</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Created At</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Updated At</th>
                 <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Actions</th>
               </tr>
             </thead>
@@ -136,10 +163,18 @@ const MemoTypeTable = () => {
                     <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(type.updatedAt)}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button className="p-1 text-muted-foreground hover:text-accent transition-colors">
+                        {/* Edit button (not implemented) */}
+                        <button
+                          className="p-1 text-muted-foreground hover:text-accent transition-colors"
+                          onClick={() => handleEditClick(type.id)}
+                        >
                           <PencilIcon className="w-4 h-4" />
                         </button>
-                        <button className="p-1 text-muted-foreground hover:text-destructive transition-colors">
+                        {/* Delete button */}
+                        <button
+                          className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                          onClick={() => handleDeleteClick(type.id)}
+                        >
                           <TrashIcon className="w-4 h-4" />
                         </button>
                       </div>
@@ -228,10 +263,18 @@ const MemoTypeTable = () => {
                   <p className="text-muted-foreground text-sm">Updated: {formatDate(type.updatedAt)}</p>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
-                  <button className="p-2 text-muted-foreground hover:text-accent hover:bg-accent/10 rounded-lg transition-colors">
+                  {/* Edit button (not implemented) */}
+                  <button
+                    className="p-2 text-muted-foreground hover:text-accent hover:bg-accent/10 rounded-lg transition-colors"
+                    onClick={() => handleEditClick(type.id)}
+                  >
                     <PencilIcon className="w-5 h-5" />
                   </button>
-                  <button className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
+                  {/* Delete button */}
+                  <button
+                    className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                    onClick={() => handleDeleteClick(type.id)}
+                  >
                     <TrashIcon className="w-5 h-5" />
                   </button>
                 </div>
@@ -254,6 +297,41 @@ const MemoTypeTable = () => {
       {/* Create Memo Type Modal */}
       <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create New Memo Type">
         <CreateMemoTypeForm onSubmit={handleCreateMemoType} onCancel={() => setIsCreateModalOpen(false)} />
+      </Modal>
+
+      {/* Delete Memo Type Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCancelDelete}
+        title="Delete Memo Type"
+        maxWidth="sm"
+      >
+        {deleteId && (
+          <CommonDeleteForm
+            description={`Delete memo type: "${memoTypes.find(e => e.id === deleteId)?.detail}"? This action cannot be undone.`}
+            onConfirm={handleConfirmDelete}
+            onCancel={handleCancelDelete}
+            isSubmitting={isDeleting}
+            error={deleteError}
+          />
+        )}
+      </Modal>
+
+      {/* Update Memo Type Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={handleCancelEdit}
+        title="Update Memo Type"
+        maxWidth="sm"
+      >
+        {editId && (
+          <UpdateMemoTypeForm
+            id={editId}
+            detail={editDetail}
+            onCancel={handleCancelEdit}
+            onSuccess={handleUpdateMemoType}
+          />
+        )}
       </Modal>
     </div>
   )

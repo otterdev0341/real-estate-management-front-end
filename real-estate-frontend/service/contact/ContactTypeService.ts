@@ -1,8 +1,9 @@
 import ResEntryContactTypeDto from "@/domain/contact/contactType/ResEntryContactTypeDto"
 import Either, { left, right } from "@/implementation/Either"
 import { BaseService } from "../base/BaseService"
-import { CreateFailed, FetchFailed, ServiceError, Unauthorized } from "@/implementation/ServiceError"
+import { CreateFailed, FetchFailed, ServiceError, Unauthorized, UpdateFailed } from "@/implementation/ServiceError"
 import { BaseQuery } from "@/domain/utility/BaseQueryDto"
+import ReqUpdateContactTypeDto from "@/domain/contact/contactType/ReqUpdateContactTypeDto"
 
 export class ContactTypeService extends BaseService {
   private static _contactInstance: ContactTypeService
@@ -105,24 +106,28 @@ export class ContactTypeService extends BaseService {
     }
   }
 
-  async updateContactType(id: string, data: { detail: string }): Promise<Either<ServiceError, ResEntryContactTypeDto>> {
+  async updateContactType(ReqUpdateContactTypeDto: ReqUpdateContactTypeDto): Promise<Either<ServiceError, ResEntryContactTypeDto>> {
     try {
       if (!this.isTokenExist()) {
         return left(Unauthorized.create("ContactTypeService", "No authentication token found."));
       }
       const token = this.getUserToken().get();
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/contact-type/${id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/contact-type/${ReqUpdateContactTypeDto.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({detail: ReqUpdateContactTypeDto.detail}),
       });
 
       if (!res.ok) {
         if (res.status === 401) {
           return left(Unauthorized.create("ContactTypeService", `Authorization failed to update contact type: ${res.statusText}`, new Error(res.statusText)));
+        }
+        if (res.status === 400) {
+                  const errorJson = await res.json();
+                  return left(UpdateFailed.create("ContactTypeService", errorJson.message || "Failed to update contact type", new Error(errorJson.message)));
         }
         return left(FetchFailed.create("ContactTypeService", `Failed to update contact type: ${res.statusText}`, new Error(res.statusText)));
       }

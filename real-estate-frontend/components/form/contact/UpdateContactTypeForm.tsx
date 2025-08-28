@@ -1,18 +1,21 @@
 "use client"
 
 import { useState } from "react"
-import { MemoTypeService } from "@/service/memo/MemoTypeService"
-import { isLeft } from "@/implementation/Either"
 import { AlertCircle, Loader2, CheckCircle } from "lucide-react"
-import ReqCreateMemoTypeDto from "@/domain/memo/ReqCreateMemoTypeDto"
+import { ContactTypeService } from "@/service/contact/ContactTypeService"
+import { isLeft } from "@/implementation/Either"
+import ReqUpdateContactTypeDto from "@/domain/contact/contactType/ReqUpdateContactTypeDto"
 
-interface CreateMemoTypeFormProps {
-  onSubmit: (memoTypeData: { detail: string }) => void
+interface UpdateContactTypeFormProps {
+  id: string
+  detail: string
   onCancel: () => void
+  onSuccess: () => void
 }
 
-const CreateMemoTypeForm = ({ onSubmit, onCancel }: CreateMemoTypeFormProps) => {
-  const [formData, setFormData] = useState<ReqCreateMemoTypeDto>({ detail: "" })
+const UpdateContactTypeForm = ({ id, detail, onCancel, onSuccess }: UpdateContactTypeFormProps) => {
+  const [formData, setFormData] = useState({ id, detail })
+  console.log(`${formData.id} - ${formData.detail}`);
   const [validationErrors, setValidationErrors] = useState({ detail: "" })
   const [errorLabel, setErrorLabel] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -22,9 +25,9 @@ const CreateMemoTypeForm = ({ onSubmit, onCancel }: CreateMemoTypeFormProps) => 
   const validateForm = () => {
     const errors = { detail: "" }
     if (!formData.detail.trim()) {
-      errors.detail = "Memo type detail is required"
+      errors.detail = "Contact type detail is required"
     } else if (formData.detail.trim().length < 2) {
-      errors.detail = "Memo type detail must be at least 2 characters"
+      errors.detail = "Contact type detail must be at least 2 characters"
     }
     setValidationErrors(errors)
     return !errors.detail
@@ -40,7 +43,7 @@ const CreateMemoTypeForm = ({ onSubmit, onCancel }: CreateMemoTypeFormProps) => 
   const handleSuccessClose = () => {
     setIsClosing(true)
     setTimeout(() => {
-      onSubmit(formData)
+      onSuccess()
     }, 300)
   }
 
@@ -49,9 +52,13 @@ const CreateMemoTypeForm = ({ onSubmit, onCancel }: CreateMemoTypeFormProps) => 
     if (!validateForm()) return
     setIsSubmitting(true)
     try {
-      const result = await MemoTypeService.instance.createNewMemoType(formData)
+      const result = await ContactTypeService.instance.updateContactType({
+        id: formData.id,
+        detail: formData.detail,
+      } as ReqUpdateContactTypeDto)
+
       if (isLeft(result)) {
-        setErrorLabel(result.value.message || "Failed to create memo type")
+        setErrorLabel(result.value.message || "Failed to update contact type")
         setIsSubmitting(false)
         return
       }
@@ -77,7 +84,7 @@ const CreateMemoTypeForm = ({ onSubmit, onCancel }: CreateMemoTypeFormProps) => 
             </div>
             <div className="text-center">
               <h3 className="text-lg font-semibold text-gray-900 mb-1">Success!</h3>
-              <p className="text-sm text-gray-600">Memo type "{formData.detail}" has been created</p>
+              <p className="text-sm text-gray-600">Contact type has been updated</p>
             </div>
           </div>
         </div>
@@ -88,15 +95,27 @@ const CreateMemoTypeForm = ({ onSubmit, onCancel }: CreateMemoTypeFormProps) => 
         <div className="absolute inset-0 bg-white/50 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
           <div className="bg-white rounded-lg shadow-lg p-4 flex items-center space-x-3">
             <Loader2 className="w-5 h-5 mr-2 text-blue-600 animate-spin" />
-            <span className="text-sm font-medium text-gray-700">Creating memo type...</span>
+            <span className="text-sm font-medium text-gray-700">Updating contact type...</span>
           </div>
         </div>
       )}
 
       {/* Form Content */}
       <div className={`space-y-4 transition-opacity duration-200 ${isSuccess ? 'opacity-30' : 'opacity-100'}`}>
+        {/* Contact Type ID */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Memo Type Name *</label>
+          <label className="block text-sm font-medium text-foreground mb-2">Contact Type ID</label>
+          <input
+            type="text"
+            value={formData.id}
+            readOnly
+            className="w-full px-3 py-2 bg-gray-100 border border-border rounded-lg text-muted-foreground text-sm sm:text-base opacity-70"
+            disabled
+          />
+        </div>
+        {/* Contact Type Name */}
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">Contact Type Name *</label>
           <input
             type="text"
             value={formData.detail}
@@ -107,8 +126,8 @@ const CreateMemoTypeForm = ({ onSubmit, onCancel }: CreateMemoTypeFormProps) => 
               }
               setErrorLabel("")
             }}
-            placeholder="e.g., Internal Memo"
-            className={`w-full px-3 py-2 bg-input border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground text-sm sm:text-base ${
+            placeholder="e.g., Personal"
+            className={`w-full px-3 py-2 bg-input border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground text-sm sm:text-base transition-colors ${
               validationErrors.detail ? "border-red-500" : "border-border"
             } ${isSubmitting || isSuccess ? "opacity-50" : ""}`}
             disabled={isSubmitting || isSuccess}
@@ -142,15 +161,15 @@ const CreateMemoTypeForm = ({ onSubmit, onCancel }: CreateMemoTypeFormProps) => 
         <button
           onClick={handleSubmit}
           disabled={!formData.detail.trim() || isSubmitting || isSuccess}
-          className="px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2 flex items-center justify-center min-w-[160px]"
+          className="px-4 py-2 bg-yellow-200 text-yellow-900 rounded-lg hover:bg-yellow-300 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2 flex items-center justify-center min-w-[160px]"
         >
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Creating...
+              Updating...
             </>
           ) : (
-            "Create Memo Type"
+            "Update"
           )}
         </button>
       </div>
@@ -158,4 +177,4 @@ const CreateMemoTypeForm = ({ onSubmit, onCancel }: CreateMemoTypeFormProps) => 
   )
 }
 
-export default CreateMemoTypeForm
+export default UpdateContactTypeForm

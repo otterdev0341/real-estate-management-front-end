@@ -1,8 +1,9 @@
 import { ContactDto } from "@/domain/contact/contact/ResEntryContactDto"
 import Either, { left, right } from "@/implementation/Either"
 import { BaseService } from "../base/BaseService"
-import { CreateFailed, FetchFailed, ServiceError, Unauthorized } from "@/implementation/ServiceError"
+import { CreateFailed, FetchFailed, ServiceError, Unauthorized, UpdateFailed } from "@/implementation/ServiceError"
 import { BaseQuery } from "@/domain/utility/BaseQueryDto"
+import { ReqUpdateContactDto } from "@/domain/contact/contact/ReqUpdateContactDto"
 
 export class ContactService extends BaseService {
   private static _contactInstance: ContactService
@@ -105,24 +106,29 @@ export class ContactService extends BaseService {
     }
   }
 
-  async updateContact(id: string, data: Partial<ContactDto>): Promise<Either<ServiceError, ContactDto>> {
+  async updateContact(reqUpdateContactDto: ReqUpdateContactDto): Promise<Either<ServiceError, ContactDto>> {
     try {
       if (!this.isTokenExist()) {
         return left(Unauthorized.create("ContactService", "No authentication token found."));
       }
       const token = this.getUserToken().get();
+      const { id, ...dataWithoutId } = reqUpdateContactDto;
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/contact/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(dataWithoutId),
       });
 
       if (!res.ok) {
         if (res.status === 401) {
           return left(Unauthorized.create("ContactService", `Authorization failed to update contact: ${res.statusText}`, new Error(res.statusText)));
+        }
+        if (res.status === 400) {
+          const errorJson = await res.json();
+          return left(UpdateFailed.create("ContactService", errorJson.message || "Failed to update contact", new Error(errorJson.message)));
         }
         return left(FetchFailed.create("ContactService", `Failed to update contact: ${res.statusText}`, new Error(res.statusText)));
       }

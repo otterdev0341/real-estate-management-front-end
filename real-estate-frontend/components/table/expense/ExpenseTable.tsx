@@ -11,10 +11,13 @@ import {
 } from "@heroicons/react/24/outline"
 import Modal from "@/components/modal/Modal"
 import CreateExpenseForm from "@/components/form/expense/CreateExpenseForm"
+import CommonDeleteForm from "@/components/form/delete/CommonDeleteForm"
+import UpdateExpenseForm from "@/components/form/expense/UpdateExpenseForm"
 import { useExpenseContext } from "@/context/store/ExpenseStore"
 import formatDate from "@/utility/utility"
 import { ExpenseService } from "@/service/expense/ExpenseService"
 import ResEntryExpenseDto from "@/domain/expense/ResEntryExpenseDto"
+import { isLeft } from "@/implementation/Either"
 
 const ExpenseTable = () => {
   const [searchTerm, setSearchTerm] = useState("")
@@ -23,6 +26,15 @@ const ExpenseTable = () => {
   const [sortColumn, setSortColumn] = useState<keyof ResEntryExpenseDto>("createdAt")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState("")
+
+  const [updateId, setUpdateId] = useState<string | null>(null)
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
+  const [updateDetail, setUpdateDetail] = useState("")
+  const [updateExpenseTypeId, setUpdateExpenseTypeId] = useState("")
 
   const { expenses, refreshExpenses } = useExpenseContext()
 
@@ -60,6 +72,47 @@ const ExpenseTable = () => {
     await ExpenseService.instance.createNewExpense(expenseData)
     await refreshExpenses()
     setIsCreateModalOpen(false)
+  }
+
+  const handleDeleteClick = (id: string) => {
+    setDeleteId(id)
+    setIsDeleteModalOpen(true)
+    setDeleteError("")
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return
+    setIsDeleting(true)
+    setDeleteError("")
+    const result = await ExpenseService.instance.deleteExpense(deleteId)
+    setIsDeleting(false)
+    if (result && "isLeft" in result && isLeft(result)) {
+      setDeleteError(result.value.message || "Failed to delete expense")
+      return
+    }
+    setIsDeleteModalOpen(false)
+    setDeleteId(null)
+    await refreshExpenses()
+  }
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false)
+    setDeleteId(null)
+    setDeleteError("")
+  }
+
+  const handleUpdateClick = (expense: ResEntryExpenseDto) => {
+    setUpdateId(expense.id)
+    setUpdateDetail(expense.expense)
+    setUpdateExpenseTypeId(expense.expenseType)
+    setIsUpdateModalOpen(true)
+  }
+
+  const handleCancelUpdate = () => {
+    setIsUpdateModalOpen(false)
+    setUpdateId(null)
+    setUpdateDetail("")
+    setUpdateExpenseTypeId("")
   }
 
   return (
@@ -138,10 +191,16 @@ const ExpenseTable = () => {
                     <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(expense.updatedAt)}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button className="p-1 text-muted-foreground hover:text-accent transition-colors">
+                        <button
+                          className="p-1 text-muted-foreground hover:text-accent transition-colors"
+                          onClick={() => handleUpdateClick(expense)}
+                        >
                           <PencilIcon className="w-4 h-4" />
                         </button>
-                        <button className="p-1 text-muted-foreground hover:text-destructive transition-colors">
+                        <button
+                          className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                          onClick={() => handleDeleteClick(expense.id)}
+                        >
                           <TrashIcon className="w-4 h-4" />
                         </button>
                       </div>
@@ -230,10 +289,16 @@ const ExpenseTable = () => {
                   <p className="text-muted-foreground text-sm">Updated: {formatDate(expense.updatedAt)}</p>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
-                  <button className="p-2 text-muted-foreground hover:text-accent hover:bg-accent/10 rounded-lg transition-colors">
+                  <button
+                    className="p-2 text-muted-foreground hover:text-accent hover:bg-accent/10 rounded-lg transition-colors"
+                    onClick={() => handleUpdateClick(expense)}
+                  >
                     <PencilIcon className="w-5 h-5" />
                   </button>
-                  <button className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
+                  <button
+                    className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                    onClick={() => handleDeleteClick(expense.id)}
+                  >
                     <TrashIcon className="w-5 h-5" />
                   </button>
                 </div>
@@ -266,6 +331,48 @@ const ExpenseTable = () => {
           }}
           onCancel={() => setIsCreateModalOpen(false)}
         />
+      </Modal>
+
+      {/* Update Expense Modal */}
+      <Modal
+        isOpen={isUpdateModalOpen}
+        onClose={handleCancelUpdate}
+        title="Update Expense"
+        maxWidth="sm"
+      >
+        {updateId && (
+          <UpdateExpenseForm
+            id={updateId}
+            detail={updateDetail}
+            expenseTypeId={updateExpenseTypeId}
+            onCancel={handleCancelUpdate}
+            onSuccess={async () => {
+              setIsUpdateModalOpen(false)
+              setUpdateId(null)
+              setUpdateDetail("")
+              setUpdateExpenseTypeId("")
+              await refreshExpenses()
+            }}
+          />
+        )}
+      </Modal>
+
+      {/* Delete Expense Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCancelDelete}
+        title="Delete Expense"
+        maxWidth="sm"
+      >
+        {deleteId && (
+          <CommonDeleteForm
+            description={`Delete expense: "${expenses.find(e => e.id === deleteId)?.expense}"? This action cannot be undone.`}
+            onConfirm={handleConfirmDelete}
+            onCancel={handleCancelDelete}
+            isSubmitting={isDeleting}
+            error={deleteError}
+          />
+        )}
       </Modal>
     </div>
   )

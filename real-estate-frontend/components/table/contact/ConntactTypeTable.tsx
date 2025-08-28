@@ -11,10 +11,14 @@ import {
 } from "@heroicons/react/24/outline"
 import Modal from "@/components/modal/Modal"
 import CreateContactTypeForm from "@/components/form/contact/CreateContactTypeForm"
+import UpdateExpenseTypeForm from "@/components/form/expense/UpdateExpenseTypeForm"
+import CommonDeleteForm from "@/components/form/delete/CommonDeleteForm"
 import { useContactTypeContext } from "@/context/store/ContactTypeStore"
 import formatDate from "@/utility/utility"
 import { ContactTypeService } from "@/service/contact/ContactTypeService"
 import ResEntryContactTypeDto from "@/domain/contact/contactType/ResEntryContactTypeDto"
+import { isLeft } from "@/implementation/Either"
+import UpdateContactTypeForm from "@/components/form/contact/UpdateContactTypeForm"
 
 const ConntactTypeTable = () => {
   const [searchTerm, setSearchTerm] = useState("")
@@ -23,6 +27,13 @@ const ConntactTypeTable = () => {
   const [sortColumn, setSortColumn] = useState<keyof ResEntryContactTypeDto>("detail")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editDetail, setEditDetail] = useState<string>("")
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState("")
 
   const { contactTypes, refreshContactTypes } = useContactTypeContext()
 
@@ -59,6 +70,55 @@ const ConntactTypeTable = () => {
     await ContactTypeService.instance.createNewContactType(contactTypeData)
     await refreshContactTypes()
     setIsCreateModalOpen(false)
+  }
+
+  const handleEditClick = (id: string) => {
+    const contactType = contactTypes.find(e => e.id === id)
+    if (contactType) {
+      setEditId(id)
+      setEditDetail(contactType.detail)
+      setIsEditModalOpen(true)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditModalOpen(false)
+    setEditId(null)
+    setEditDetail("")
+  }
+
+  const handleUpdateContactType = async () => {
+    await refreshContactTypes()
+    setIsEditModalOpen(false)
+    setEditId(null)
+    setEditDetail("")
+  }
+
+  const handleDeleteClick = (id: string) => {
+    setDeleteId(id)
+    setIsDeleteModalOpen(true)
+    setDeleteError("")
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return
+    setIsDeleting(true)
+    setDeleteError("")
+    const result = await ContactTypeService.instance.deleteContactType(deleteId)
+    setIsDeleting(false)
+    if (result && "isLeft" in result && isLeft(result)) {
+      setDeleteError(result.value.message || "Failed to delete contact type")
+      return
+    }
+    setIsDeleteModalOpen(false)
+    setDeleteId(null)
+    await refreshContactTypes()
+  }
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false)
+    setDeleteId(null)
+    setDeleteError("")
   }
 
   return (
@@ -135,10 +195,16 @@ const ConntactTypeTable = () => {
                     <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(type.updatedAt)}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button className="p-1 text-muted-foreground hover:text-accent transition-colors">
+                        <button
+                          className="p-1 text-muted-foreground hover:text-accent transition-colors"
+                          onClick={() => handleEditClick(type.id)}
+                        >
                           <PencilIcon className="w-4 h-4" />
                         </button>
-                        <button className="p-1 text-muted-foreground hover:text-destructive transition-colors">
+                        <button
+                          className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                          onClick={() => handleDeleteClick(type.id)}
+                        >
                           <TrashIcon className="w-4 h-4" />
                         </button>
                       </div>
@@ -227,10 +293,16 @@ const ConntactTypeTable = () => {
                   <p className="text-muted-foreground text-sm">Updated: {formatDate(type.updatedAt)}</p>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
-                  <button className="p-2 text-muted-foreground hover:text-accent hover:bg-accent/10 rounded-lg transition-colors">
+                  <button
+                    className="p-2 text-muted-foreground hover:text-accent hover:bg-accent/10 rounded-lg transition-colors"
+                    onClick={() => handleEditClick(type.id)}
+                  >
                     <PencilIcon className="w-5 h-5" />
                   </button>
-                  <button className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
+                  <button
+                    className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                    onClick={() => handleDeleteClick(type.id)}
+                  >
                     <TrashIcon className="w-5 h-5" />
                   </button>
                 </div>
@@ -251,8 +323,53 @@ const ConntactTypeTable = () => {
       </div>
 
       {/* Create Contact Type Modal */}
-      <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create New Contact Type">
-        <CreateContactTypeForm onSubmit={handleCreateContactType} onCancel={() => setIsCreateModalOpen(false)} />
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        title="Create New Contact Type"
+      >
+        <CreateContactTypeForm
+          onCancel={() => setIsCreateModalOpen(false)}
+          onSuccess={async () => {
+            setIsCreateModalOpen(false)
+            await refreshContactTypes()
+          }}
+        />
+      </Modal>
+
+      {/* Update Contact Type Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={handleCancelEdit}
+        title="Update Contact Type"
+        maxWidth="sm"
+      >
+        {editId && (
+          <UpdateContactTypeForm
+            id={editId}
+            detail={editDetail}
+            onCancel={handleCancelEdit}
+            onSuccess={handleUpdateContactType}
+          />
+        )}
+      </Modal>
+
+      {/* Delete Contact Type Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCancelDelete}
+        title="Delete Contact Type"
+        maxWidth="sm"
+      >
+        {deleteId && (
+          <CommonDeleteForm
+            description={`Delete contact type: "${contactTypes.find(e => e.id === deleteId)?.detail}"? This action cannot be undone.`}
+            onConfirm={handleConfirmDelete}
+            onCancel={handleCancelDelete}
+            isSubmitting={isDeleting}
+            error={deleteError}
+          />
+        )}
       </Modal>
     </div>
   )

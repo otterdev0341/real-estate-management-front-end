@@ -1,3 +1,3 @@
-export interface ReqCreateExpenseTypeDto {
+export default interface ReqCreateExpenseTypeDto {
     detail: string;
 }

@@ -11,10 +11,13 @@ import {
 } from "@heroicons/react/24/outline"
 import Modal from "@/components/modal/Modal"
 import CreateContactForm from "@/components/form/contact/CreateContactForm"
+import UpdateContactForm from "@/components/form/contact/UpdateContactForm"
+import CommonDeleteForm from "@/components/form/delete/CommonDeleteForm"
 import { useContactContext } from "@/context/store/ContactStore"
 import formatDate from "@/utility/utility"
 import { ContactService } from "@/service/contact/ContactService"
 import { ContactDto } from "@/domain/contact/contact/ResEntryContactDto"
+import { isLeft } from "@/implementation/Either"
 
 const ContactTable = () => {
   const [searchTerm, setSearchTerm] = useState("")
@@ -23,6 +26,13 @@ const ContactTable = () => {
   const [sortColumn, setSortColumn] = useState<keyof ContactDto>("businessName")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [updateId, setUpdateId] = useState<string | null>(null)
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
+  const [updateContactData, setUpdateContactData] = useState<Partial<ContactDto>>({})
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState("")
 
   const { contacts, refreshContacts } = useContactContext()
 
@@ -65,6 +75,45 @@ const ContactTable = () => {
     await ContactService.instance.createNewContact(contactData)
     await refreshContacts()
     setIsCreateModalOpen(false)
+  }
+
+  const handleUpdateClick = (contact: ContactDto) => {
+    setUpdateId(contact.id)
+    setUpdateContactData(contact)
+    setIsUpdateModalOpen(true)
+  }
+
+  const handleCancelUpdate = () => {
+    setIsUpdateModalOpen(false)
+    setUpdateId(null)
+    setUpdateContactData({})
+  }
+
+  const handleDeleteClick = (id: string) => {
+    setDeleteId(id)
+    setIsDeleteModalOpen(true)
+    setDeleteError("")
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return
+    setIsDeleting(true)
+    setDeleteError("")
+    const result = await ContactService.instance.deleteContact(deleteId)
+    setIsDeleting(false)
+    if (result && "isLeft" in result && isLeft(result)) {
+      setDeleteError(result.value.message || "Failed to delete contact")
+      return
+    }
+    setIsDeleteModalOpen(false)
+    setDeleteId(null)
+    await refreshContacts()
+  }
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false)
+    setDeleteId(null)
+    setDeleteError("")
   }
 
   return (
@@ -143,10 +192,16 @@ const ContactTable = () => {
                     <td className="px-6 py-4 text-sm text-muted-foreground">{contact.email}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button className="p-1 text-muted-foreground hover:text-accent transition-colors">
+                        <button
+                          className="p-1 text-muted-foreground hover:text-accent transition-colors"
+                          onClick={() => handleUpdateClick(contact)}
+                        >
                           <PencilIcon className="w-4 h-4" />
                         </button>
-                        <button className="p-1 text-muted-foreground hover:text-destructive transition-colors">
+                        <button
+                          className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                          onClick={() => handleDeleteClick(contact.id)}
+                        >
                           <TrashIcon className="w-4 h-4" />
                         </button>
                       </div>
@@ -261,7 +316,60 @@ const ContactTable = () => {
 
       {/* Create Contact Modal */}
       <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create New Contact">
-        <CreateContactForm onSubmit={handleCreateContact} onCancel={() => setIsCreateModalOpen(false)} />
+        <CreateContactForm
+          onSuccess={async () => {
+            setIsCreateModalOpen(false)
+            await refreshContacts()
+          }}
+          onCancel={() => setIsCreateModalOpen(false)}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={isUpdateModalOpen}
+        onClose={handleCancelUpdate}
+        title="Update Contact"
+        maxWidth="sm"
+      >
+        {updateId && (
+          <UpdateContactForm
+            id={updateContactData.id ?? ""}
+            businessName={updateContactData.businessName ?? ""}
+            internalName={updateContactData.internalName ?? ""}
+            detail={updateContactData.detail ?? ""}
+            note={updateContactData.note ?? ""}
+            contactType={updateContactData.contactType ?? ""}
+            address={updateContactData.address ?? ""}
+            phone={updateContactData.phone ?? ""}
+            mobilePhone={updateContactData.mobilePhone ?? ""}
+            line={updateContactData.line ?? ""}
+            email={updateContactData.email ?? ""}
+            onCancel={handleCancelUpdate}
+            onSuccess={async () => {
+              setIsUpdateModalOpen(false)
+              setUpdateId(null)
+              setUpdateContactData({})
+              await refreshContacts()
+            }}
+          />
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCancelDelete}
+        title="Delete Contact"
+        maxWidth="sm"
+      >
+        {deleteId && (
+          <CommonDeleteForm
+            description={`Delete contact: "${contacts.find(c => c.id === deleteId)?.businessName}"? This action cannot be undone.`}
+            onConfirm={handleConfirmDelete}
+            onCancel={handleCancelDelete}
+            isSubmitting={isDeleting}
+            error={deleteError}
+          />
+        )}
       </Modal>
     </div>
   )

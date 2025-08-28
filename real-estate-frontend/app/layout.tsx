@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 const layout = ({ children }: {children: ReactNode}) => {
    return (
     <html lang="en">
+      
       <body>
         <ServiceProvider>
           {children}
