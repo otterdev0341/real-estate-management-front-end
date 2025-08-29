@@ -16,6 +16,7 @@ const layout = ({ children }: {children: ReactNode}) => {
     <html lang="en">
       
       <body>
+        <div id="modal-root"></div>
         <ServiceProvider>
           {children}
         </ServiceProvider>

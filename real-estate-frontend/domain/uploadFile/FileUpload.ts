@@ -4,7 +4,7 @@ export default interface FileUpload {
   id: string;
   fileName: string;
   urlPath: string;
-  fileSize: number;
   fileType: string; // image, pdf, other
+  fileSize: number;
 }
 

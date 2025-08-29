@@ -9,3 +9,4 @@ export default function formatDate(dateStr: string) {
     minute: "2-digit",
   })
 }
+

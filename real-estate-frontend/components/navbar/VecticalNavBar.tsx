@@ -36,10 +36,13 @@ const navigationItems = [
 export function VerticalNavbar() {
   const pathname = usePathname()
   // Find the item that matches the current path
-  const initialActiveItem =
-    navigationItems.find(item => item.href === pathname)?.name || "Dashboard"
+  const getActiveItem = (pathname: string) => {
+    if (pathname.startsWith("/service/memo")) return "Memo"
+    const matched = navigationItems.find(item => item.href === pathname)
+    return matched?.name || "Dashboard"
+  }
 
-  const [activeItem, setActiveItem] = useState(initialActiveItem)
+  const [activeItem, setActiveItem] = useState(getActiveItem(pathname))
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
@@ -75,9 +78,7 @@ export function VerticalNavbar() {
 
   // Update activeItem when pathname changes
   React.useEffect(() => {
-    const matchedItem =
-      navigationItems.find(item => item.href === pathname)?.name || "Dashboard"
-    setActiveItem(matchedItem)
+    setActiveItem(getActiveItem(pathname))
   }, [pathname])
 
   return (
@@ -156,7 +157,7 @@ export function VerticalNavbar() {
           {isMobileMenuOpen ? (
             <XMarkIcon className="w-6 h-6 text-white" />
           ) : (
-            <Bars3Icon className="w-6 h-6 text-white" />
+            <Bars3Icon className="w-6 h-6 text-gray-300" />
           )}
         </button>
       </div>

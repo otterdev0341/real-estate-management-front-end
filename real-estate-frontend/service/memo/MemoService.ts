@@ -189,14 +189,14 @@ export class MemoService extends BaseService {
         if (res.status === 401) {
           return left(Unauthorized.create("MemoService", `Authorization failed to fetch memo: ${res.statusText}`, new Error(res.statusText)));
         }
-        
+
         return left(FetchFailed.create("MemoService", `Failed to fetch memo: ${res.statusText}`, new Error(res.statusText)));
       }
 
       const json = await res.json();
-      console.log("Full response:", json); // Add this line
+      // console.log("Full response:", json); // Add this line
       const responseData: ResEntryMemoDto = json.data;
-      console.log("Memo data:", responseData); // This is your original log
+      // console.log("Memo data:", responseData); // This is your original log
       return right(responseData);
     } catch (error) {
       return left(FetchFailed.create("MemoService", "An unexpected error occurred during fetching memo.", error));
@@ -210,7 +210,13 @@ export class MemoService extends BaseService {
         return left(Unauthorized.create("MemoService", "No authentication token found."));
       }
       const token = this.getUserToken().get();
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/memo/${dto.targetId}/files?${dto.fileType}`, {
+
+      // Check types before fetch
+      if (typeof dto.targetId !== "string" || typeof dto.fileType !== "string") {
+        return left(FetchFailed.create("MemoService", "Invalid targetId or fileType. Both must be strings."));
+      }
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/memo/${dto.targetId}/files/${dto.fileType}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -226,7 +232,9 @@ export class MemoService extends BaseService {
       }
 
       const json = await res.json();
+      console.log(json);
       const items: FileUpload[] = json.data ?? [];
+      console.log("Fetched files memo service:", items);
       return right(items);
     } catch (error) {
       return left(FetchFailed.create("MemoService", "An unexpected error occurred during fetching memo files.", error));

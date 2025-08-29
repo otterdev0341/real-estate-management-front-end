@@ -1,23 +1,27 @@
+"use client"
+
 import { useEffect, useState } from "react"
 import { PaperClipIcon, DocumentIcon, PhotoIcon } from "@heroicons/react/24/outline"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import BaseFileRelatedDto from "@/domain/utility/BaseFetchFileRelatedDto"
-
-interface FileItem {
-  id: string
-  fileName: string
-  urlPath: string
-  fileType: string
-  fileSize: string
-  createdBy: string
-}
+import FileUpload from "@/domain/uploadFile/FileUpload"
+import Either, { isRight } from "@/implementation/Either"
+import { ServiceError } from "@/implementation/ServiceError"
+import BaseAttachFileToTarget from "@/domain/utility/BaseAttachFileToTarget"
+import BaseRemoveFileFromTarget from "@/domain/utility/BaseRemoveFileFromTarget"
+import DisplayImageAttachments from "@/components/attached/DisplayImageAttachments"
+import DisplayPdfAttachments from "@/components/attached/DisplayPdfAttachments"
+import DisplayOtherAttachments from "@/components/attached/DisplayOtherAttachments"
+import DisplayImageMobileAttachments from "@/components/attached/DisplayImageMobileAttachments"
+import AttachFileToTargetForm from "@/components/form/attach/AttachFileToTargetForm"
+import Modal from "@/components/modal/Modal"
 
 
 interface CommonAttachmentsProps {
-   id: string
-  fetchFiles: (dto: BaseFileRelatedDto) => Promise<FileItem[]>
-  attachFile: (dto: { targetId: string, file: File }) => Promise<void>
-  removeFile: (dto: { targetId: string, fileId: string }) => Promise<void>
+  id: string
+  fetchFiles: (dto: BaseFileRelatedDto) => Promise<Either<ServiceError, FileUpload[]>>
+  attachFile: (dto: BaseAttachFileToTarget) => Promise<Either<ServiceError, void>>
+  removeFile: (dto: BaseRemoveFileFromTarget) => Promise<Either<ServiceError, void>>
 }
 // this will 4 thing as props
 /**
@@ -27,167 +31,228 @@ interface CommonAttachmentsProps {
  * 4: target id to fetch files
  */
 
-const CommonAttachments = ({ id, fetchFiles }: CommonAttachmentsProps) => {
-  const [files, setFiles] = useState<FileItem[]>([])
+const CommonAttachments = ({ id, fetchFiles, attachFile, removeFile }: CommonAttachmentsProps) => {
+  const [files, setFiles] = useState<FileUpload[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("all")
+  const [searchText, setSearchText] = useState("")
+  const [isMobile, setIsMobile] = useState(false)
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
 
   useEffect(() => {
     setLoading(true)
-    fetchFiles(id).then(f => {
-      setFiles(f)
+    fetchFiles({ targetId: id, fileType: "all" }).then(result => {
+      if (isRight(result)) {
+        setFiles(result.value)
+        console.log("Fetched files success:", result.value);
+      } else {
+        setFiles([])
+      }
       setLoading(false)
     })
   }, [id, fetchFiles])
 
-  const filteredFiles = files.filter(file =>
-    file.fileName.toLowerCase().includes(searchTerm === "all" ? "" : searchTerm.toLowerCase())
-  )
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
+
+  // Filter by tab and search text
+  const filteredFiles = files.filter(file => {
+    const matchesTab =
+      searchTerm === "all" ||
+      (searchTerm === "image" && file.fileType === "image") ||
+      (searchTerm === "pdf" && file.fileType === "pdf") ||
+      (searchTerm === "other" && file.fileType === "other")
+    const matchesSearch =
+      (file.fileName ?? "").toLowerCase().includes(searchText.toLowerCase())
+    return matchesTab && matchesSearch
+  })
+
+  const tabOptions = [
+    { key: "all", label: `All (${files.length})` },
+    { key: "image", label: `Images (${files.filter(f => f.fileType === "image").length})` },
+    { key: "pdf", label: `PDFs (${files.filter(f => f.fileType === "pdf").length})` },
+    { key: "other", label: `Others (${files.filter(f => f.fileType === "other").length})` }
+  ]
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
+    <div className="max-w-7xl mx-auto w-full space-y-6">
+      {/* Responsive header: Attachments + Upload button */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
         <div className="font-semibold text-lg flex items-center gap-2">
           <PaperClipIcon className="w-5 h-5 text-muted-foreground" />
           Attachments
         </div>
-        <button className="px-4 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700 font-medium flex items-center gap-2">
+        <button
+          className="px-4 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700 font-medium flex items-center gap-2 w-full sm:w-auto"
+          onClick={() => setIsUploadModalOpen(true)}
+        >
           <PaperClipIcon className="w-4 h-4" />
           Upload File
         </button>
       </div>
-      {/* Filter Tabs */}
-      <div className="flex gap-2 mb-6">
-        {[
-          { key: "all", label: `All (${files.length})` },
-          { key: "image", label: `Images (${files.filter(f => f.fileType === "image").length})` },
-          { key: "pdf", label: `PDFs (${files.filter(f => f.fileType === "pdf").length})` },
-          { key: "other", label: `Others (${files.filter(f => f.fileType === "other").length})` }
-        ].map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setSearchTerm(tab.key)}
-            className={`px-3 py-1 rounded-full font-medium text-sm ${
-              searchTerm === tab.key
-                ? "bg-violet-100 text-violet-700"
-                : "bg-muted text-muted-foreground hover:bg-violet-50"
-            }`}
+
+      {/* Upload Modal */}
+      <Modal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        title="Upload File"
+        maxWidth="sm"
+        footer={null}
+      >
+        <AttachFileToTargetForm
+          attachFile={attachFile}
+          id={id}
+          serviceName="Memo"
+          onCancel={() => setIsUploadModalOpen(false)}
+          onSuccess={() => {
+            setIsUploadModalOpen(false)
+            setLoading(true)
+            fetchFiles({ targetId: id, fileType: "all" }).then(result => {
+              if (isRight(result)) {
+                setFiles(result.value)
+              } else {
+                setFiles([])
+              }
+              setLoading(false)
+            })
+          }}
+        />
+      </Modal>
+
+      {/* Search Input */}
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search by file name..."
+          value={searchText}
+          onChange={e => setSearchText(e.target.value)}
+          className="w-full md:w-1/3 px-3 py-2 border rounded focus:outline-none focus:ring focus:border-violet-300 text-sm"
+        />
+      </div>
+      {/* Responsive Tabs */}
+      <div className="mb-6">
+        {/* Mobile: Select dropdown */}
+        <div className="md:hidden">
+          <select
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full px-3 py-2 border rounded text-sm bg-muted"
           >
-            {tab.label}
-          </button>
-        ))}
+            {tabOptions.map(tab => (
+              <option key={tab.key} value={tab.key}>{tab.label}</option>
+            ))}
+          </select>
+        </div>
+        {/* Desktop: Button tabs */}
+        <div className="hidden md:flex gap-2">
+          {tabOptions.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setSearchTerm(tab.key)}
+              className={`px-3 py-1 rounded-full font-medium text-sm ${
+                searchTerm === tab.key
+                  ? "bg-violet-100 text-violet-700"
+                  : "bg-muted text-muted-foreground hover:bg-violet-50"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
       {/* Images */}
-      {["all", "image"].includes(searchTerm) && files.filter(f => f.fileType === "image").length > 0 && (
-        <div className="mb-6">
-          <div className="font-semibold text-base mb-2 flex items-center gap-2">
-            <PhotoIcon className="w-5 h-5 text-blue-500" />
-            Images ({files.filter(f => f.fileType === "image").length})
-          </div>
-          {/* "all" tab: slideshow for desktop */}
-          {searchTerm === "all" && (
-            <div className="hidden sm:block">
-              <Carousel opts={{ loop: false }}>
-                <CarouselContent>
-                  {files.filter(f => f.fileType === "image").map(file => (
-                    <CarouselItem key={file.id} className="basis-1/2">
-                      <div className="bg-white rounded-lg border border-border p-3 flex flex-col">
-                        <img src={file.urlPath} alt={file.fileName} className="rounded-lg mb-2 object-cover h-32 w-full" />
-                        <div className="font-medium text-sm">{file.fileName}</div>
-                        <div className="text-xs text-muted-foreground mb-2">{file.fileSize}</div>
-                        <div className="flex gap-2">
-                          <button className="px-2 py-1 rounded bg-muted text-muted-foreground text-xs hover:bg-muted/70">View</button>
-                          <button className="px-2 py-1 rounded bg-muted text-muted-foreground text-xs hover:bg-muted/70">Download</button>
-                          <button className="px-2 py-1 rounded bg-red-50 text-red-600 text-xs hover:bg-red-100">Delete</button>
-                        </div>
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious />
-                <CarouselNext />
-              </Carousel>
-            </div>
-          )}
-          {/* "image" tab: grid for desktop */}
-          {searchTerm === "image" && (
-            <div className="hidden sm:grid grid-cols-2 md:grid-cols-3 gap-4">
-              {files.filter(f => f.fileType === "image").map(file => (
-                <div key={file.id} className="bg-white rounded-lg border border-border p-3 flex flex-col">
-                  <img src={file.urlPath} alt={file.fileName} className="rounded-lg mb-2 object-cover h-32 w-full" />
-                  <div className="font-medium text-sm">{file.fileName}</div>
-                  <div className="text-xs text-muted-foreground mb-2">{file.fileSize}</div>
-                  <div className="flex gap-2">
-                    <button className="px-2 py-1 rounded bg-muted text-muted-foreground text-xs hover:bg-muted/70">View</button>
-                    <button className="px-2 py-1 rounded bg-muted text-muted-foreground text-xs hover:bg-muted/70">Download</button>
-                    <button className="px-2 py-1 rounded bg-red-50 text-red-600 text-xs hover:bg-red-100">Delete</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {/* Mobile view: always grid 2 columns */}
-          <div className="grid grid-cols-2 gap-4 sm:hidden">
-            {files.filter(f => f.fileType === "image").map(file => (
-              <div key={file.id} className="bg-white rounded-lg border border-border p-3 flex flex-col">
-                <img src={file.urlPath} alt={file.fileName} className="rounded-lg mb-2 object-cover h-32 w-full" />
-                <div className="font-medium text-sm">{file.fileName}</div>
-                <div className="text-xs text-muted-foreground mb-2">{file.fileSize}</div>
-                <div className="flex gap-2">
-                  <button className="px-2 py-1 rounded bg-muted text-muted-foreground text-xs hover:bg-muted/70">View</button>
-                  <button className="px-2 py-1 rounded bg-muted text-muted-foreground text-xs hover:bg-muted/70">Download</button>
-                  <button className="px-2 py-1 rounded bg-red-50 text-red-600 text-xs hover:bg-red-100">Delete</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      {searchTerm === "image" && isMobile ? (
+        <DisplayImageMobileAttachments
+          files={filteredFiles}
+          removeFileFromTarget={removeFile}
+          targetId={id}
+          tabSelected="mobile"
+          onRefresh={() => {
+            setLoading(true)
+            fetchFiles({ targetId: id, fileType: "all" }).then(result => {
+              if (isRight(result)) {
+                setFiles(result.value)
+              } else {
+                setFiles([])
+              }
+              setLoading(false)
+            })
+          }}
+        />
+      ) : (
+        ["all", "image"].includes(searchTerm) && (
+          <DisplayImageAttachments
+            files={filteredFiles}
+            removeFileFromTarget={removeFile}
+            targetId={id}
+            tabSelected={searchTerm}
+            onRefresh={() => {
+              setLoading(true)
+              fetchFiles({ targetId: id, fileType: "all" }).then(result => {
+                if (isRight(result)) {
+                  setFiles(result.value)
+                } else {
+                  setFiles([])
+                }
+                setLoading(false)
+              })
+            }}
+          />
+        )
       )}
       {/* PDFs */}
-      {["all", "pdf"].includes(searchTerm) && files.filter(f => f.fileType === "pdf").length > 0 && (
-        <div className="mb-6">
-          <div className="font-semibold text-base mb-2 flex items-center gap-2">
-            <DocumentIcon className="w-5 h-5 text-red-500" />
-            PDF Documents ({files.filter(f => f.fileType === "pdf").length})
-          </div>
-          {files.filter(f => f.fileType === "pdf").map(file => (
-            <div key={file.id} className="bg-white rounded-lg border border-border p-3 flex items-center justify-between mb-2">
-              <div>
-                <div className="font-medium text-sm text-red-700">{file.fileName}</div>
-                <div className="text-xs text-muted-foreground">{file.fileSize}</div>
-              </div>
-              <div className="flex gap-2">
-                <button className="px-2 py-1 rounded bg-muted text-muted-foreground text-xs hover:bg-muted/70">View</button>
-                <button className="px-2 py-1 rounded bg-muted text-muted-foreground text-xs hover:bg-muted/70">Download</button>
-                <button className="px-2 py-1 rounded bg-red-50 text-red-600 text-xs hover:bg-red-100">Delete</button>
-              </div>
-            </div>
-          ))}
-        </div>
+      {["all", "pdf"].includes(searchTerm) && (
+        <DisplayPdfAttachments
+          files={filteredFiles}
+          onView={file => {}}
+          onDownload={file => {}}
+          onDelete={file => {}}
+          targetId={id}
+          removeFileFromTarget={async (dto) => {
+            const result = await removeFile(dto)
+            if (result && isRight(result)) {
+              setLoading(true)
+              fetchFiles({ targetId: id, fileType: "all" }).then(result => {
+                if (isRight(result)) {
+                  setFiles(result.value)
+                } else {
+                  setFiles([])
+                }
+                setLoading(false)
+              })
+            }
+            return result
+          }}
+        />
       )}
       {/* Others */}
-      {["all", "other"].includes(searchTerm) && files.filter(f => f.fileType === "other").length > 0 && (
-        <div>
-          <div className="font-semibold text-base mb-2 flex items-center gap-2">
-            <PaperClipIcon className="w-5 h-5 text-gray-500" />
-            Other Files ({files.filter(f => f.fileType === "other").length})
-          </div>
-          {files.filter(f => f.fileType === "other").map(file => (
-            <div key={file.id} className="bg-white rounded-lg border border-border p-3 flex items-center justify-between mb-2">
-              <div>
-                <div className="font-medium text-sm">{file.fileName}</div>
-                <div className="text-xs text-muted-foreground">{file.fileSize}</div>
-              </div>
-              <div className="flex gap-2">
-                <button className="px-2 py-1 rounded bg-muted text-muted-foreground text-xs hover:bg-muted/70">Download</button>
-                <button className="px-2 py-1 rounded bg-red-50 text-red-600 text-xs hover:bg-red-100">Delete</button>
-              </div>
-            </div>
-          ))}
-        </div>
+      {["all", "other"].includes(searchTerm) && (
+        <DisplayOtherAttachments
+          targetId={id}
+          files={filteredFiles}
+          removeFileFromTarget={async (dto) => {
+            const result = await removeFile(dto)
+            if (result && isRight(result)) {
+              setLoading(true)
+              fetchFiles({ targetId: id, fileType: "all" }).then(result => {
+                if (isRight(result)) {
+                  setFiles(result.value)
+                } else {
+                  setFiles([])
+                }
+                setLoading(false)
+              })
+            }
+            return result
+          }}
+        />
       )}
       {/* No files */}
-      {files.length === 0 && (
+      {filteredFiles.length === 0 && (
         <div className="text-muted-foreground mt-6">No attachments found.</div>
       )}
     </div>
