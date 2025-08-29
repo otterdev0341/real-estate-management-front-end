@@ -8,59 +8,44 @@ import {
   TrashIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  PaperClipIcon,
+  DocumentIcon,
+  PhotoIcon,
 } from "@heroicons/react/24/outline"
 import Modal from "@/components/modal/Modal"
 import CreateMemoForm from "@/components/form/memo/CreateMemoForm"
-
-interface Memo {
-  id: string
-  name?: string
-  detail?: string
-  memoType: string
-  createdAt: string
-  updatedAt: string
-}
-
-const mockMemos: Memo[] = [
-  {
-    id: "M001",
-    name: "Lease Agreement",
-    detail: "Signed lease for unit 101",
-    memoType: "Legal Memo",
-    createdAt: "2024-01-05",
-    updatedAt: "2024-01-06",
-  },
-  {
-    id: "M002",
-    name: "Maintenance Request",
-    detail: "Plumbing issue reported",
-    memoType: "Maintenance Memo",
-    createdAt: "2024-01-10",
-    updatedAt: "2024-01-11",
-  },
-  {
-    id: "M003",
-    name: "Payment Note",
-    detail: "January rent received",
-    memoType: "Finance Memo",
-    createdAt: "2024-01-15",
-    updatedAt: "2024-01-16",
-  },
-]
+import CommonDeleteForm from "@/components/form/delete/CommonDeleteForm"
+import { useMemoContext } from "@/context/store/MemoStore"
+import { MemoService } from "@/service/memo/MemoService"
+import formatDate from "@/utility/utility"
+import { isLeft } from "@/implementation/Either"
+import ResEntryMemoDto from "@/domain/memo/ResEntryMemoDto"
+import UpdateMemoForm from "@/components/form/memo/UpdateMemoForm"
+import FileUpload from "@/domain/uploadFile/FileUpload"
+import { useRouter } from "next/navigation"
 
 const MemoTable = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(20)
-  const [sortColumn, setSortColumn] = useState<keyof Memo>("name")
+  const [sortColumn, setSortColumn] = useState<keyof ResEntryMemoDto>("id")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editMemoData, setEditMemoData] = useState<Partial<ResEntryMemoDto>>({})
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState("")
 
-  const filteredMemos = mockMemos.filter((memo) =>
-    (memo.name ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (memo.detail ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    memo.memoType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    memo.id.toLowerCase().includes(searchTerm.toLowerCase())
+  const { memos, refreshMemos } = useMemoContext()
+  const router = useRouter()
+
+  // Filter and sort
+  const filteredMemos = memos.filter((memo) =>
+    memo.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (memo.name ?? "").toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const sortedMemos = [...filteredMemos].sort((a, b) => {
@@ -78,7 +63,7 @@ const MemoTable = () => {
   const startIndex = (currentPage - 1) * rowsPerPage
   const paginatedMemos = sortedMemos.slice(startIndex, startIndex + rowsPerPage)
 
-  const handleSort = (column: keyof Memo) => {
+  const handleSort = (column: keyof ResEntryMemoDto) => {
     if (column === sortColumn) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc")
     } else {
@@ -87,10 +72,68 @@ const MemoTable = () => {
     }
   }
 
-  const handleCreateMemo = (memoData: any) => {
-    // Add logic to update your data here
-    console.log("Creating new memo:", memoData)
-    setIsCreateModalOpen(false)
+  // Helper to count file types
+  const getFileTypeCounts = (files: FileUpload[]) => {
+    const counts = { image: 0, pdf: 0, other: 0 }
+    files.forEach(file => {
+      if (file.fileType === "image") counts.image++
+      else if (file.fileType === "pdf") counts.pdf++
+      else counts.other++
+    })
+    return counts
+  }
+
+  // Edit
+  const handleEditClick = (memo: ResEntryMemoDto) => {
+    setEditId(memo.id)
+    setEditMemoData(memo)
+    setIsEditModalOpen(true)
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditModalOpen(false)
+    setEditId(null)
+    setEditMemoData({})
+  }
+
+  const handleUpdateMemo = async () => {
+    await refreshMemos()
+    setIsEditModalOpen(false)
+    setEditId(null)
+    setEditMemoData({})
+  }
+
+  // Delete
+  const handleDeleteClick = (id: string) => {
+    setDeleteId(id)
+    setIsDeleteModalOpen(true)
+    setDeleteError("")
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return
+    setIsDeleting(true)
+    setDeleteError("")
+    const result = await MemoService.instance.deleteMemo(deleteId)
+    setIsDeleting(false)
+    if (result && "isLeft" in result && isLeft(result)) {
+      setDeleteError(result.value.message || "Failed to delete memo")
+      return
+    }
+    setIsDeleteModalOpen(false)
+    setDeleteId(null)
+    await refreshMemos()
+  }
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false)
+    setDeleteId(null)
+    setDeleteError("")
+  }
+
+  // Add this handler
+  const handleRowClick = (memoId: string) => {
+    router.push(`/service/memo/${memoId}`)
   }
 
   return (
@@ -134,18 +177,18 @@ const MemoTable = () => {
                   { key: "id", label: "ID" },
                   { key: "name", label: "Name" },
                   { key: "detail", label: "Detail" },
-                  { key: "memoType", label: "Type" },
-                  { key: "createdAt", label: "Created At" },
+                  { key: "memoType", label: "Memo Type" },
+                  { key: "attachment", label: "Attachment" },
                   { key: "updatedAt", label: "Updated At" },
                 ].map((column) => (
                   <th
                     key={column.key}
-                    onClick={() => handleSort(column.key as keyof Memo)}
+                    onClick={column.key !== "attachment" ? () => handleSort(column.key as keyof ResEntryMemoDto) : undefined}
                     className="px-6 py-4 text-left text-sm font-semibold text-foreground cursor-pointer hover:text-accent transition-colors select-none"
                   >
                     <div className="flex items-center gap-1">
                       {column.label}
-                      {sortColumn === column.key && (
+                      {sortColumn === column.key && column.key.toString() !== "attachment" && (
                         <span className="text-accent">{sortDirection === "asc" ? "↑" : "↓"}</span>
                       )}
                     </div>
@@ -156,34 +199,87 @@ const MemoTable = () => {
             </thead>
             <tbody>
               {paginatedMemos.length > 0 ? (
-                paginatedMemos.map((memo, index) => (
-                  <tr
-                    key={memo.id}
-                    className={`border-b border-border hover:bg-muted/30 transition-colors ${
-                      index % 2 === 0 ? "bg-background/50" : "bg-muted/20"
-                    }`}
-                  >
-                    <td className="px-6 py-4 text-sm font-medium text-foreground">{memo.id}</td>
-                    <td className="px-6 py-4 text-sm text-foreground font-medium">{memo.name}</td>
-                    <td className="px-6 py-4 text-sm text-foreground">{memo.detail}</td>
-                    <td className="px-6 py-4 text-sm text-foreground">{memo.memoType}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{memo.createdAt}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{memo.updatedAt}</td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button className="p-1 text-muted-foreground hover:text-accent transition-colors">
-                          <PencilIcon className="w-4 h-4" />
-                        </button>
-                        <button className="p-1 text-muted-foreground hover:text-destructive transition-colors">
-                          <TrashIcon className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                paginatedMemos.map((memo, index) => {
+                  const counts = getFileTypeCounts(memo.files)
+                  return (
+                    <tr
+                      key={memo.id}
+                      className={`border-b border-border hover:bg-muted/30 transition-colors cursor-pointer ${
+                        index % 2 === 0 ? "bg-background/50" : "bg-muted/20"
+                      }`}
+                      onClick={() => handleRowClick(memo.id)}
+                    >
+                      <td className="px-6 py-4 text-sm font-medium text-foreground">{memo.id.slice(0,6)}</td>
+                      <td className="px-6 py-4 text-sm text-foreground font-medium">
+                        {memo.name && memo.name.length > 40
+                          ? memo.name.slice(0, 40) + "..."
+                          : memo.name || "-"}
+                      </td>
+                      {/* Detail column */}
+                      <td className="px-6 py-4 text-sm text-muted-foreground">
+                        {memo.detail && memo.detail.length > 40
+                          ? memo.detail.slice(0, 40) + "..."
+                          : memo.detail || "-"}
+                      </td>
+                      {/* Memo Type column */}
+                      <td className="px-6 py-4 text-sm text-foreground">
+                        {memo.memoType || "-"}
+                      </td>
+                      {/* Attachment column */}
+                      <td className="px-6 py-4 text-sm text-foreground">
+                        <div className="flex items-center gap-3">
+                          {counts.image > 0 && (
+                            <span className="inline-flex items-center gap-1 text-blue-600">
+                              <PhotoIcon className="w-4 h-4" />
+                              {counts.image}
+                            </span>
+                          )}
+                          {counts.pdf > 0 && (
+                            <span className="inline-flex items-center gap-1 text-red-600">
+                              <DocumentIcon className="w-4 h-4" />
+                              {counts.pdf}
+                            </span>
+                          )}
+                          {counts.other > 0 && (
+                            <span className="inline-flex items-center gap-1 text-gray-600">
+                              <PaperClipIcon className="w-4 h-4" />
+                              {counts.other}
+                            </span>
+                          )}
+                          {(counts.image === 0 && counts.pdf === 0 && counts.other === 0) && (
+                            <span className="text-muted-foreground text-xs">-</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(memo.updatedAt)}</td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            className="p-1 text-muted-foreground hover:text-accent transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleEditClick(memo)
+                            }}
+                          >
+                            <PencilIcon className="w-4 h-4" />
+                          </button>
+                          <button
+                            className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteClick(memo.id)
+                            }}
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
+                  <td colSpan={5} className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
                         <MagnifyingGlassIcon className="w-6 h-6 text-muted-foreground" />
@@ -246,34 +342,67 @@ const MemoTable = () => {
       {/* Mobile Card View */}
       <div className="lg:hidden space-y-4">
         {paginatedMemos.length > 0 ? (
-          paginatedMemos.map((memo) => (
-            <div
-              key={memo.id}
-              className="bg-card/60 backdrop-blur-xl border border-border rounded-xl p-4 shadow-lg hover:bg-card/80 transition-all duration-200"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1 space-y-2">
-                  <h3 className="font-semibold text-foreground text-lg">{memo.name}</h3>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                      {memo.memoType}
-                    </span>
+          paginatedMemos.map((memo) => {
+            const counts = getFileTypeCounts(memo.files)
+            const totalFiles = counts.image + counts.pdf + counts.other
+            return (
+              <div
+                key={memo.id}
+                className="bg-card/60 backdrop-blur-xl border border-border rounded-xl p-4 shadow-lg hover:bg-card/80 transition-all duration-200 cursor-pointer"
+                onClick={() => handleRowClick(memo.id)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 space-y-2">
+                    <h3 className="font-semibold text-foreground text-lg">
+                      {memo.name && memo.name.length > 80
+                        ? memo.name.slice(0, 80) + "..."
+                        : memo.name || "-"}
+                    </h3>
+                    <p className="text-muted-foreground text-sm">
+                      {memo.detail && memo.detail.length > 80
+                        ? memo.detail.slice(0, 80) + "..."
+                        : memo.detail || "-"}
+                    </p>
+                    {/* Memo Type */}
+                    <p className="text-foreground text-sm font-medium">
+                      {memo.memoType || "-"}
+                    </p>
+                    {/* Attachment icon and count (only if totalFiles > 0) */}
+                    {totalFiles > 0 && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <PaperClipIcon className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground font-medium">{totalFiles}</span>
+                      </div>
+                    )}
+                    {/* Updated At (smaller font) */}
+                    <p className="text-muted-foreground text-xs mt-1">
+                      Updated: {formatDate(memo.updatedAt)}
+                    </p>
                   </div>
-                  <p className="text-muted-foreground text-sm">{memo.detail}</p>
-                  <p className="text-muted-foreground text-sm">Created: {memo.createdAt}</p>
-                  <p className="text-muted-foreground text-sm">Updated: {memo.updatedAt}</p>
-                </div>
-                <div className="flex items-center gap-2 ml-4">
-                  <button className="p-2 text-muted-foreground hover:text-accent hover:bg-accent/10 rounded-lg transition-colors">
-                    <PencilIcon className="w-5 h-5" />
-                  </button>
-                  <button className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
-                    <TrashIcon className="w-5 h-5" />
-                  </button>
+                  <div className="flex items-center gap-2 ml-4">
+                    <button
+                      className="p-2 text-muted-foreground hover:text-accent hover:bg-accent/10 rounded-lg transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleEditClick(memo)
+                      }}
+                    >
+                      <PencilIcon className="w-5 h-5" />
+                    </button>
+                    <button
+                      className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeleteClick(memo.id)
+                      }}
+                    >
+                      <TrashIcon className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            )
+          })
         ) : (
           <div className="bg-card/60 backdrop-blur-xl border border-border rounded-xl p-8 text-center">
             <div className="flex flex-col items-center gap-2">
@@ -289,7 +418,52 @@ const MemoTable = () => {
 
       {/* Create Memo Modal */}
       <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create New Memo">
-        <CreateMemoForm onSubmit={handleCreateMemo} onCancel={() => setIsCreateModalOpen(false)} />
+        <CreateMemoForm
+          onSubmit={async (formData) => {
+            await MemoService.instance.createNewMemo(formData)
+            setIsCreateModalOpen(false)
+            await refreshMemos()
+          }}
+          onCancel={() => setIsCreateModalOpen(false)}
+        />
+      </Modal>
+
+      {/* Update Memo Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={handleCancelEdit}
+        title="Update Memo"
+        maxWidth="sm"
+      >
+        {editId && (
+          <UpdateMemoForm
+            id={editMemoData.id ?? ""}
+            name={editMemoData.name ?? ""}
+            detail={editMemoData.detail ?? ""}
+            createdAt={editMemoData.createdAt ?? ""}
+            updatedAt={editMemoData.updatedAt ?? ""}
+            onCancel={handleCancelEdit}
+            onSuccess={handleUpdateMemo}
+          />
+        )}
+      </Modal>
+
+      {/* Delete Memo Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCancelDelete}
+        title="Delete Memo"
+        maxWidth="sm"
+      >
+        {deleteId && (
+          <CommonDeleteForm
+            description={`Delete memo: "${memos.find(m => m.id === deleteId)?.name}"? This action cannot be undone.`}
+            onConfirm={handleConfirmDelete}
+            onCancel={handleCancelDelete}
+            isSubmitting={isDeleting}
+            error={deleteError}
+          />
+        )}
       </Modal>
     </div>
   )

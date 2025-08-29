@@ -1,7 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
+import { Paperclip } from "lucide-react"
+import { useMemoTypeContext } from "@/context/store/MemoTypeStore"
+import CommonSelect, { CommonSelectItem } from "@/components/options/CommonSelect"
 
+interface FileUpload {
+  name: string
+  size: number
+  type: string
+}
 
 interface CreateMemoFormProps {
   onSubmit?: (memoData: any) => void
@@ -16,8 +24,16 @@ const initialState = {
 }
 
 const CreateMemoForm = ({ onSubmit, onCancel }: CreateMemoFormProps) => {
+  const { memoTypes, loading } = useMemoTypeContext()
   const [formData, setFormData] = useState(initialState)
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({})
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const memoTypeOptions: CommonSelectItem[] = memoTypes.map(type => ({
+    id: type.id,
+    value: type.id,
+    label: type.detail,
+  }))
 
   const validateForm = () => {
     const errors: { [key: string]: string } = {}
@@ -35,6 +51,11 @@ const CreateMemoForm = ({ onSubmit, onCancel }: CreateMemoFormProps) => {
     }
   }
 
+  const handleMemoTypeSelect = (item: CommonSelectItem) => {
+    setFormData({ ...formData, memoType: item.value })
+    setValidationErrors({ ...validationErrors, memoType: "" })
+  }
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArr: FileUpload[] = Array.from(e.target.files).map((file) => ({
@@ -46,9 +67,20 @@ const CreateMemoForm = ({ onSubmit, onCancel }: CreateMemoFormProps) => {
     }
   }
 
+  const handleAttachmentClick = () => {
+    fileInputRef.current?.click()
+  }
+
   const handleSubmit = () => {
     if (!validateForm()) return
     if (onSubmit) onSubmit(formData)
+  }
+
+  const getAttachmentText = () => {
+    const count = formData.files.length
+    if (count === 0) return "attachment"
+    if (count === 1) return "1 attachment"
+    return `${count} attachments`
   }
 
   return (
@@ -81,26 +113,38 @@ const CreateMemoForm = ({ onSubmit, onCancel }: CreateMemoFormProps) => {
         </div>
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">Memo Type *</label>
-          <input
-            type="text"
-            name="memoType"
-            value={formData.memoType}
-            onChange={handleChange}
-            placeholder="Memo type UUID"
-            className={`w-full px-3 py-2 bg-input border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground text-sm sm:text-base ${
-              validationErrors.memoType ? "border-red-500" : "border-border"
-            }`}
+          <CommonSelect
+            items={memoTypeOptions}
+            defaultValue={formData.memoType}
+            onSelect={handleMemoTypeSelect}
+            placeholder="Select or search memo type"
+            disabled={loading}
           />
           {validationErrors.memoType && <p className="text-red-500 text-xs mt-1">{validationErrors.memoType}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">Files</label>
+          
+          {/* Hidden file input */}
           <input
+            ref={fileInputRef}
             type="file"
             multiple
             onChange={handleFileChange}
-            className="w-full px-3 py-2 bg-input border border-border rounded-lg"
+            className="hidden"
           />
+          
+          {/* Custom attachment button */}
+          <button
+            type="button"
+            onClick={handleAttachmentClick}
+            className="flex items-center gap-2 px-3 py-2 bg-input border border-border rounded-lg hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <Paperclip className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">{getAttachmentText()}</span>
+          </button>
+          
+          {/* File list */}
           {formData.files.length > 0 && (
             <ul className="mt-2 text-xs text-muted-foreground">
               {formData.files.map((file, idx) => (

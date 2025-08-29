@@ -5,6 +5,11 @@ import { BaseQuery } from "@/domain/utility/BaseQueryDto"
 import ResEntryMemoDto from "@/domain/memo/ResEntryMemoDto"
 import ReqCreateMemoDto from "@/domain/memo/ReqCreateMemoDto"
 import ReqUpdateMemoDto from "@/domain/memo/ReqUpdateMemoDto"
+import FileUpload from "@/domain/uploadFile/FileUpload"
+import BaseFileRelatedDto from "@/domain/utility/BaseFetchFileRelatedDto"
+import BaseFetchFileRelatedDto from "@/domain/utility/BaseFetchFileRelatedDto"
+import BaseAttachFileToTarget from "@/domain/utility/BaseAttachFileToTarget"
+import BaseRemoveFileFromTarget from "@/domain/utility/BaseRemoveFileFromTarget"
 
 
 export class MemoService extends BaseService {
@@ -83,9 +88,9 @@ export class MemoService extends BaseService {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify(query),
+        }
       });
+
 
       if (!res.ok) {
         if (res.status === 401) {
@@ -169,6 +174,9 @@ export class MemoService extends BaseService {
         return left(Unauthorized.create("MemoService", "No authentication token found."));
       }
       const token = this.getUserToken().get();
+      if (!id) {
+        return left(FetchFailed.create("MemoService", "Memo ID is required to fetch memo."));
+      }
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/memo/${id}`, {
         method: "GET",
         headers: {
@@ -181,13 +189,108 @@ export class MemoService extends BaseService {
         if (res.status === 401) {
           return left(Unauthorized.create("MemoService", `Authorization failed to fetch memo: ${res.statusText}`, new Error(res.statusText)));
         }
+        
         return left(FetchFailed.create("MemoService", `Failed to fetch memo: ${res.statusText}`, new Error(res.statusText)));
       }
 
-      const responseData: ResEntryMemoDto = await res.json();
+      const json = await res.json();
+      console.log("Full response:", json); // Add this line
+      const responseData: ResEntryMemoDto = json.data;
+      console.log("Memo data:", responseData); // This is your original log
       return right(responseData);
     } catch (error) {
       return left(FetchFailed.create("MemoService", "An unexpected error occurred during fetching memo.", error));
     }
   }
+
+
+  async fetchMemoFileRelated(dto: BaseFetchFileRelatedDto): Promise<Either<ServiceError, FileUpload[]>> {
+    try {
+      if (!this.isTokenExist()) {
+        return left(Unauthorized.create("MemoService", "No authentication token found."));
+      }
+      const token = this.getUserToken().get();
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/memo/${dto.targetId}/files?${dto.fileType}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          return left(Unauthorized.create("MemoService", `Authorization failed to fetch memo files: ${res.statusText}`, new Error(res.statusText)));
+        }
+        return left(FetchFailed.create("MemoService", `Failed to fetch memo files: ${res.statusText}`, new Error(res.statusText)));
+      }
+
+      const json = await res.json();
+      const items: FileUpload[] = json.data ?? [];
+      return right(items);
+    } catch (error) {
+      return left(FetchFailed.create("MemoService", "An unexpected error occurred during fetching memo files.", error));
+    }
+  }
+
+  async attachFileToMemo(dto: BaseAttachFileToTarget): Promise<Either<ServiceError, void>> {
+    try {
+      if (!this.isTokenExist()) {
+        return left(Unauthorized.create("MemoService", "No authentication token found."));
+      }
+      const token = this.getUserToken().get();
+
+      // Build FormData for multipart
+      const formData = new FormData();
+      formData.append("file", dto.file);
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/memo/attach/${dto.targetId}`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          // Do not set Content-Type, browser will set it for FormData
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          return left(Unauthorized.create("MemoService", `Authorization failed to attach file to memo: ${res.statusText}`, new Error(res.statusText)));
+        }
+        return left(FetchFailed.create("MemoService", `Failed to attach file to memo: ${res.statusText}`, new Error(res.statusText)));
+      }
+
+      return right(undefined);
+    } catch (error) {
+      return left(FetchFailed.create("MemoService", "An unexpected error occurred during attaching file to memo.", error));
+    }
+  }
+
+  async removeFileFromMemo(dto: BaseRemoveFileFromTarget): Promise<Either<ServiceError, void>> {
+    try {
+      if (!this.isTokenExist()) {
+        return left(Unauthorized.create("MemoService", "No authentication token found."));
+      }
+      const token = this.getUserToken().get();
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/memo/remove/${dto.targetId}/${dto.fileId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok && res.status !== 409) {
+        if (res.status === 401 ) {
+          return left(Unauthorized.create("MemoService", `Authorization failed to remove file from memo: ${res.statusText}`, new Error(res.statusText)));
+        }
+        return left(FetchFailed.create("MemoService", `Failed to remove file from memo: ${res.statusText}`, new Error(res.statusText)));
+      }
+
+      return right(undefined);
+    } catch (error) {
+      return left(FetchFailed.create("MemoService", "An unexpected error occurred during removing file from memo.", error));
+    }
+  }
+
 }

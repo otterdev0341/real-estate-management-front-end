@@ -1,3 +1,4 @@
+import FileUpload from "../uploadFile/FileUpload";
 
 
 export default interface ReqCreateMemoDto {
