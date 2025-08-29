@@ -72,10 +72,31 @@ const CommonAttachments = ({ id, fetchFiles, attachFile, removeFile }: CommonAtt
   })
 
   const tabOptions = [
-    { key: "all", label: `All (${files.length})` },
-    { key: "image", label: `Images (${files.filter(f => f.fileType === "image").length})` },
-    { key: "pdf", label: `PDFs (${files.filter(f => f.fileType === "pdf").length})` },
-    { key: "other", label: `Others (${files.filter(f => f.fileType === "other").length})` }
+    {
+      key: "all",
+      label: files.length > 0 ? `All (${files.length})` : "All"
+    },
+    {
+      key: "image",
+      label: (() => {
+        const count = files.filter(f => f.fileType === "image").length
+        return count > 0 ? `Images (${count})` : "Images"
+      })()
+    },
+    {
+      key: "pdf",
+      label: (() => {
+        const count = files.filter(f => f.fileType === "pdf").length
+        return count > 0 ? `PDFs (${count})` : "PDFs"
+      })()
+    },
+    {
+      key: "other",
+      label: (() => {
+        const count = files.filter(f => f.fileType === "other").length
+        return count > 0 ? `Others (${count})` : "Others"
+      })()
+    }
   ]
 
   return (
@@ -250,10 +271,6 @@ const CommonAttachments = ({ id, fetchFiles, attachFile, removeFile }: CommonAtt
             return result
           }}
         />
-      )}
-      {/* No files */}
-      {filteredFiles.length === 0 && (
-        <div className="text-muted-foreground mt-6">No attachments found.</div>
       )}
     </div>
   )

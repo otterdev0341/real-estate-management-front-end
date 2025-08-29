@@ -62,7 +62,7 @@ const DisplayOtherAttachments = ({
     <div>
       <div className="font-semibold text-base mb-2 flex items-center gap-2">
         <PaperClipIcon className="w-5 h-5 text-gray-500" />
-        Other Files ({otherFiles.length})
+        Other Files{otherFiles.length > 0 ? ` (${otherFiles.length})` : ""}
       </div>
       {otherFiles.map(file => (
         <div key={file.id} className={`bg-white rounded-lg border border-border p-3 flex ${isMobile ? "flex-col items-start" : "items-center"} justify-between mb-2`}>

@@ -82,7 +82,7 @@ const DisplayImageAttachments = ({
     <div>
       <div className="font-semibold text-violet-700 mb-2 flex items-center gap-2">
         <PhotoIcon className="w-5 h-5 text-violet-400" />
-        Images ({imageFiles.length})
+        Images {imageFiles.length > 0 ? ` (${imageFiles.length})` : ""}
       </div>
       {tabSelected === "image" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">

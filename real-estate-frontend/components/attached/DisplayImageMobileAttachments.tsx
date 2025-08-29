@@ -67,7 +67,7 @@ const DisplayImageMobileAttachments = ({
     <div>
       <div className="font-semibold text-violet-700 mb-2 flex items-center gap-2">
         <PhotoIcon className="w-5 h-5 text-violet-400" />
-        Images ({imageFiles.length})
+        Images {imageFiles.length > 0 ? ` (${imageFiles.length})` : ""}
       </div>
       <div className="flex flex-col gap-4">
         {imageFiles.map(file => (

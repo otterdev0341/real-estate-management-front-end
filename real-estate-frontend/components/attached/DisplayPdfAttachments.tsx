@@ -72,7 +72,7 @@ const DisplayPdfAttachments = ({
           <FaRegFilePdf className="w-5 h-5 text-red-300" />
         </span>
         <span className="text-red-500 font-semibold flex items-center">
-          PDF Documents ({pdfFiles.length})
+          PDF Documents {pdfFiles.length > 0 ? ` (${pdfFiles.length})` : ""}
         </span>
       </div>
       {pdfFiles.map(file => (
