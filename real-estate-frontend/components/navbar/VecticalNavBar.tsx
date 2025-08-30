@@ -38,6 +38,10 @@ export function VerticalNavbar() {
   // Find the item that matches the current path
   const getActiveItem = (pathname: string) => {
     if (pathname.startsWith("/service/memo")) return "Memo"
+    if (pathname.startsWith("/service/property")) return "Property"
+    if (pathname.startsWith("/service/sale")) return "Sale"
+    if (pathname.startsWith("/service/payment")) return "Payment"
+    if (pathname.startsWith("/service/investment")) return "Investment"
     const matched = navigationItems.find(item => item.href === pathname)
     return matched?.name || "Dashboard"
   }
