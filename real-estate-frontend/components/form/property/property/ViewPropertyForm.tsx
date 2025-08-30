@@ -169,31 +169,60 @@ const ViewPropertyForm = ({ propertyId }: ViewPropertyFormProps) => {
               </div>
               <div>
                 <div className="text-sm font-semibold text-gray-600 mb-2">Maximum Budget</div>
-                <div className="text-base text-gray-800">{property.maximumBudget}</div>
+                <div className="text-base text-gray-800">
+                  {property.maximumBudget !== undefined && property.maximumBudget !== null && property.maximumBudget !== ""
+                    ? property.maximumBudget
+                    : "-"}
+                </div>
               </div>
               <div>
                 <div className="text-sm font-semibold text-gray-600 mb-2">FSP</div>
-                <div className="text-base text-gray-800">{property.fsp}</div>
+                <div className="text-base text-gray-800">
+                  {property.fsp !== undefined && property.fsp !== null && property.fsp !== ""
+                    ? property.fsp
+                    : "-"}
+                </div>
               </div>
               <div>
                 <div className="text-sm font-semibold text-gray-600 mb-2">Area</div>
-                <div className="text-base text-gray-800">{property.area}</div>
+                <div className="text-base text-gray-800">
+                  {property.area !== undefined && property.area !== null && property.area !== ""
+                    ? property.area
+                    : "-"}
+                </div>
               </div>
               <div>
                 <div className="text-sm font-semibold text-gray-600 mb-2">Highlight</div>
-                <div className="text-base text-gray-800">{property.highlight}</div>
+                <div className="text-base text-gray-800">
+                  {property.highlight !== undefined && property.highlight !== null && property.highlight !== ""
+                    ? property.highlight
+                    : "-"}
+                </div>
               </div>
               <div>
                 <div className="text-sm font-semibold text-gray-600 mb-2">Specific</div>
-                <div className="text-base text-gray-800">{property.specific}</div>
+                <div className="text-base text-gray-800">
+                  {property.specific !== undefined && property.specific !== null && property.specific !== ""
+                    ? property.specific
+                    : "-"}
+                </div>
               </div>
               <div>
                 <div className="text-sm font-semibold text-gray-600 mb-2">Map URL</div>
-                <div className="text-base text-gray-800 break-all">{property.mapUrl}</div>
+                <div className="text-base text-gray-800 break-all">
+                  {property.mapUrl !== undefined && property.mapUrl !== null && property.mapUrl !== ""
+                    ? property.mapUrl
+                    : "-"}
+                </div>
               </div>
               <div>
                 <div className="text-sm font-semibold text-gray-600 mb-2">Latitude / Longitude</div>
-                <div className="text-base text-gray-800">{property.lat}, {property.lng}</div>
+                <div className="text-base text-gray-800">
+                  {(property.lat !== undefined && property.lat !== null && property.lat !== "" &&
+                    property.lng !== undefined && property.lng !== null && property.lng !== "")
+                    ? `${property.lat}, ${property.lng}`
+                    : "-"}
+                </div>
               </div>
             </div>
             <div className="space-y-4">

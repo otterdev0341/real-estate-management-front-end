@@ -4,6 +4,8 @@ import { useState } from "react"
 import { useParams } from "next/navigation"
 import ViewPropertyForm from "@/components/form/property/property/ViewPropertyForm"
 import CommonAttachments from "@/components/attached/CommonAttachments"
+import PropertyTypeTransferList from "@/components/form/property/property/transferList/PropertyTypeTransferList"
+import MemoTransferList from "@/components/form/memo/tranferList/MemoTransferList"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import BaseFetchFileRelatedDto from "@/domain/utility/BaseFetchFileRelatedDto"
 import { PropertyService } from "@/service/property/PropertyService"
@@ -17,6 +19,7 @@ const TABS = [
   { key: "attachment", label: "Attachments" },
   { key: "forcast", label: "Forecast" },
   { key: "propertyType", label: "Property Type" },
+  { key: "property", label: "Assign To Memos" }, // Add property tab for memo transfer
   { key: "memo", label: "Linked Memos" },
 ]
 
@@ -85,7 +88,7 @@ export default function PropertyDetailPage() {
         </div>
 
         {/* Tab Content */}
-        <div className="bg-card/60 backdrop-blur-xl border border-border rounded-xl p-4 sm:p-6 shadow-lg relative">
+        <div className="bg-card/60 backdrop-blur-xl border border-border rounded-xl p-4 sm:p-6 shadow-lg relative overflow-x-auto">
           {activeTab === "detail" && <ViewPropertyForm propertyId={propertyId} />}
           {activeTab === "attachment" && (
             <CommonAttachments
@@ -102,9 +105,17 @@ export default function PropertyDetailPage() {
             </div>
           )}
           {activeTab === "propertyType" && (
-            <div>
-              <h2 className="text-lg font-semibold mb-2">Property Type</h2>
-              <div className="text-muted-foreground">Property type details go here.</div>
+            <PropertyTypeTransferList propertyId={propertyId} />
+          )}
+          {activeTab === "property" && (
+            <div className="w-full">
+              {/* Responsive MemoTransferList for mobile and desktop */}
+              {/* <div className="md:hidden space-y-4">
+                <MemoTransferList memoId={propertyId} />
+              </div>
+              <div className="hidden md:block">
+                <MemoTransferList memoId={propertyId} />
+              </div> */}
             </div>
           )}
           {activeTab === "memo" && (

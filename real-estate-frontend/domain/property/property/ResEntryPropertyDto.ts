@@ -1,6 +1,6 @@
 import FileUpload from "@/domain/uploadFile/FileUpload";
 
-export default interface ReqUpdatePropertyDto {
+export default interface ResEntryPropertyDto {
   id: string;
   name: string;
   description: string;

@@ -10,6 +10,7 @@ import BaseFileRelatedDto from "@/domain/utility/BaseFetchFileRelatedDto"
 import BaseFetchFileRelatedDto from "@/domain/utility/BaseFetchFileRelatedDto"
 import BaseAttachFileToTarget from "@/domain/utility/BaseAttachFileToTarget"
 import BaseRemoveFileFromTarget from "@/domain/utility/BaseRemoveFileFromTarget"
+import ResEntryPropertyDto from "@/domain/property/property/ResEntryPropertyDto"
 
 
 export class MemoService extends BaseService {
@@ -298,6 +299,41 @@ export class MemoService extends BaseService {
       return right(undefined);
     } catch (error) {
       return left(FetchFailed.create("MemoService", "An unexpected error occurred during removing file from memo.", error));
+    }
+  }
+
+  async fetchAllPropertiesByMemoId(memoId: string): Promise<Either<ServiceError, ResEntryPropertyDto[]>> {
+    try {
+      if (!this.isTokenExist()) {
+        return left(Unauthorized.create("MemoService", "No authentication token found."));
+      }
+      const token = this.getUserToken().get();
+
+      // Check types before fetch
+     
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/memo/${memoId}/properties`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          return left(Unauthorized.create("MemoService", `Authorization failed to fetch memo files: ${res.statusText}`, new Error(res.statusText)));
+        }
+        return left(FetchFailed.create("MemoService", `Failed to fetch memo files: ${res.statusText}`, new Error(res.statusText)));
+      }
+
+      const json = await res.json();
+      console.log(json);
+      const items: ResEntryPropertyDto[] = json.data ?? [];
+      console.log("Fetched Property by memo id memo service:", items);
+      return right(items);
+    } catch (error) {
+      return left(FetchFailed.create("MemoService", "An unexpected error occurred during fetching memo files.", error));
     }
   }
 

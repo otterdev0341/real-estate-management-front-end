@@ -6,8 +6,10 @@ import { usePropertyStatusContext } from "@/context/store/PropertyStatusStore"
 import { useContactContext } from "@/context/store/ContactStore"
 import CommonSelect, { CommonSelectItem } from "@/components/options/CommonSelect"
 import { PropertyService } from "@/service/property/PropertyService"
-import { isLeft } from "@/implementation/Either"
+import { isLeft, isRight } from "@/implementation/Either"
 import ReqUpdatePropertyDto from "@/domain/property/property/ReqUpdatePropertyDto"
+import extractLatLng from "@/utility/extractLatLng"
+import { Switch } from "@/components/ui/switch"
 
 interface UpdatePropertyFormProps extends ReqUpdatePropertyDto {
   onCancel: () => void
@@ -55,6 +57,8 @@ const UpdatePropertyForm = ({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
+  const [extractSwitch, setExtractSwitch] = useState(false)
+  const [extractError, setExtractError] = useState<string>("")
 
   const propertyStatusOptions: CommonSelectItem[] = propertyStatuses.map(status => ({
     id: status.id,
@@ -131,6 +135,32 @@ const UpdatePropertyForm = ({
     } catch (error) {
       setErrorLabel("An unexpected error occurred. Please try again.")
       setIsSubmitting(false)
+    }
+  }
+
+  const handleExtractSwitch = (checked: boolean) => {
+    if (checked) {
+      const result = extractLatLng(formData.mapUrl)
+      if (isRight(result)) {
+        setFormData({
+          ...formData,
+          lat: result.value.lat || "",
+          lng: result.value.lng || "",
+        })
+        setExtractSwitch(true)
+        setExtractError("")
+      } else {
+        setFormData({
+          ...formData,
+          lat: "",
+          lng: "",
+        })
+        setExtractSwitch(false)
+        setExtractError("Failed to extract latitude/longitude from the provided map URL.")
+      }
+    } else {
+      setExtractSwitch(false)
+      setExtractError("")
     }
   }
 
@@ -340,6 +370,20 @@ const UpdatePropertyForm = ({
             disabled={isSubmitting || isSuccess}
           />
         </div>
+        <div className="flex items-center gap-2 mb-2">
+          <Switch
+            checked={extractSwitch}
+            onCheckedChange={handleExtractSwitch}
+            id="extract-latlng-switch"
+            disabled={isSubmitting || isSuccess}
+          />
+          <label htmlFor="extract-latlng-switch" className="text-sm text-foreground">
+            Extract lat long
+          </label>
+        </div>
+        {extractError && (
+          <div className="text-xs text-red-500 mb-2">{extractError}</div>
+        )}
         {/* Latitude & Longitude */}
         <div className="flex gap-4">
           <div className="flex-1">

@@ -12,11 +12,12 @@ import CommonAttachments from "@/components/attached/CommonAttachments"
 import BaseAttachFileToTarget from "@/domain/utility/BaseAttachFileToTarget"
 import BaseRemoveFileFromTarget from "@/domain/utility/BaseRemoveFileFromTarget"
 import { ChevronDoubleLeftIcon } from "@heroicons/react/24/outline"
+import MemoTransferList from "@/components/form/memo/tranferList/MemoTransferList"
 
 const TABS = [
 	{ key: "detail", label: "View Details" },
 	{ key: "attachment", label: "Attachments" },
-	{ key: "property", label: "Linked Properties" },
+	{ key: "property", label: "Assign To Properties" },
 ]
 
 const fetchFiles = async (dto: BaseFetchFileRelatedDto) => {
@@ -45,10 +46,8 @@ export default function MemoDetailPage() {
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        
-          <h1 className="text-2xl text-left font-bold sm:ml-6">Memo Details</h1>
-          <div className="flex-1" />
-        
+        <h1 className="text-2xl text-left font-bold sm:ml-6">Memo Details</h1>
+        <div className="flex-1" />
 
         {/* Mobile Tab Selector */}
         <div className="sm:hidden mb-6">
@@ -96,6 +95,9 @@ export default function MemoDetailPage() {
               attachFile={attachFile}
               removeFile={removeFile}
             />
+          )}
+          {activeTab === "property" && (
+            <MemoTransferList memoId={memoId} />
           )}
         </div>
       </div>

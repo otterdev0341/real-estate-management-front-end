@@ -11,6 +11,7 @@ import BaseRemoveFileFromTarget from "@/domain/utility/BaseRemoveFileFromTarget"
 import BaseFetchFileRelatedDto from "@/domain/utility/BaseFetchFileRelatedDto"
 import ResEntryMemoDto from "@/domain/memo/ResEntryMemoDto"
 import ReqAssignPropertyType from "@/domain/utility/ReqAssignPropertyType"
+import ResEntryPropertyTypeDto from "@/domain/property/propertyType/ResEntryPropertyTypeDto"
 
 export class PropertyService extends BaseService {
   private static _propertyInstance: PropertyService
@@ -387,6 +388,7 @@ export class PropertyService extends BaseService {
       }
 
       const json = await res.json();
+      console.log(json);
       const items: ResEntryMemoDto[] = json.data?.items ?? [];
       return right(items);
     } catch (error) {
@@ -395,36 +397,43 @@ export class PropertyService extends BaseService {
   }
 
 
-  async assignPropertyTypeToProperty(reqAssignPropertyTYpe: ReqAssignPropertyType): Promise<Either<ServiceError, void>> {
+  async assignPropertyTypeToProperty(reqAssignPropertyType: ReqAssignPropertyType): Promise<Either<ServiceError, void>> {
     try {
       if (!this.isTokenExist()) {
         return left(Unauthorized.create("PropertyService", "No authentication token found."));
       }
       const token = this.getUserToken().get();
-      const {propertyId, ...data} = reqAssignPropertyTYpe;
+      const { propertyId, propertyTypes } = reqAssignPropertyType;
+
+      console.log("Assigning property types:", propertyTypes, "to property ID:", propertyId);
+      
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/property/${propertyId}/assign/property-type`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
-          "body": JSON.stringify(data),
-        }
+        },
+        body: JSON.stringify({ propertyTypes }),
       });
+
+
 
       if (!res.ok) {
         if (res.status === 401) {
-          return left(Unauthorized.create("PropertyService", `Authorization failed to fetch memos by property: ${res.statusText}`, new Error(res.statusText)));
+          return left(Unauthorized.create("PropertyService", `Authorization failed to assign property type: ${res.statusText}`, new Error(res.statusText)));
         }
         if (res.status === 400) {
           return left(UpdateFailed.create("PropertyService", `Failed to assign property type to property with BadRequest: ${res.statusText}`, new Error(res.statusText)));
         }
-        return left(FetchFailed.create("PropertyService", `Failed to fetch memo by property: ${res.statusText}`, new Error(res.statusText)));
+        return left(FetchFailed.create("PropertyService", `Failed to assign property type: ${res.statusText}`, new Error(res.statusText)));
       }
 
+      const json = await res.json();
+      console.log(json);
+
       return right(undefined);
-      
     } catch (error) {
-      return left(FetchFailed.create("PropertyService", "An unexpected error occurred during fetching memo by property.", error));
+      return left(FetchFailed.create("PropertyService", "An unexpected error occurred during assigning property type.", error));
     }
   }
 
@@ -461,7 +470,38 @@ export class PropertyService extends BaseService {
     }
   }
 
+  async fetchAllPropertyTypesByPropertyId(propertyId: string): Promise<Either<ServiceError, ResEntryPropertyTypeDto[]>> {
+    try {
+      if (!this.isTokenExist()) {
+        return left(Unauthorized.create("PropertyService", "No authentication token found."));
+      }
+      const token = this.getUserToken().get();
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/property/${propertyId}/property-type`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        }
+      });
 
+      if (!res.ok) {
+        if (res.status === 401) {
+          return left(Unauthorized.create("PropertyService", `Authorization failed to fetch memos by property: ${res.statusText}`, new Error(res.statusText)));
+        }
+        if (res.status === 400) {
+          return left(UpdateFailed.create("PropertyService", `Failed to fetch property by property with BadRequest: ${res.statusText}`, new Error(res.statusText)));
+        }
+        return left(FetchFailed.create("PropertyService", `Failed to fetch memo by property: ${res.statusText}`, new Error(res.statusText)));
+      }
+
+      const json = await res.json();
+      const items: ResEntryPropertyTypeDto[] = json.data?.items ?? [];
+      return right(items);
+      
+    } catch (error) {
+      return left(FetchFailed.create("PropertyService", "An unexpected error occurred during fetching memo by property.", error));
+    }
+  }
 
 
 
