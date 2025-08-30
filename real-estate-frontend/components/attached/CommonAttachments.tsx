@@ -208,7 +208,21 @@ const CommonAttachments = ({ id, fetchFiles, attachFile, removeFile }: CommonAtt
         ["all", "image"].includes(searchTerm) && (
           <DisplayImageAttachments
             files={filteredFiles}
-            removeFileFromTarget={removeFile}
+            removeFileFromTarget={async (dto) => {
+              const result = await removeFile(dto)
+              if (result && isRight(result)) {
+                setLoading(true)
+                fetchFiles({ targetId: id, fileType: "all" }).then(result => {
+                  if (isRight(result)) {
+                    setFiles(result.value)
+                  } else {
+                    setFiles([])
+                  }
+                  setLoading(false)
+                })
+              }
+              return result
+            }}
             targetId={id}
             tabSelected={searchTerm}
             onRefresh={() => {

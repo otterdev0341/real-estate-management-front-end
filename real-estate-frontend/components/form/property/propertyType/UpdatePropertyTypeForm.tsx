@@ -3,16 +3,18 @@
 import { useState } from "react"
 import { PropertyTypeService } from "@/service/property/PropertyTypeService"
 import { isLeft } from "@/implementation/Either"
+import ReqUpdatePropertyTypeDto from "@/domain/property/propertyType/ReqUpdatePropertyTypeDto"
 import { AlertCircle, Loader2, CheckCircle } from "lucide-react"
-import ReqCreatePropertyTypeDto from "@/domain/property/propertyType/ReqCreatePropertyTypeDto"
 
-interface CreatePropertyTypeFormProps {
+interface UpdatePropertyTypeFormProps {
+  id: string
+  detail: string
+  onSuccess: (updated?: { id: string; detail: string }) => void
   onCancel: () => void
-  onSuccess: () => void
 }
 
-const CreatePropertyTypeForm = ({ onCancel, onSuccess }: CreatePropertyTypeFormProps) => {
-  const [formData, setFormData] = useState<ReqCreatePropertyTypeDto>({ detail: "" })
+const UpdatePropertyTypeForm = ({ id, detail, onSuccess, onCancel }: UpdatePropertyTypeFormProps) => {
+  const [formData, setFormData] = useState({ id, detail })
   const [validationErrors, setValidationErrors] = useState({ detail: "" })
   const [errorLabel, setErrorLabel] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -22,9 +24,9 @@ const CreatePropertyTypeForm = ({ onCancel, onSuccess }: CreatePropertyTypeFormP
   const validateForm = () => {
     const errors = { detail: "" }
     if (!formData.detail.trim()) {
-      errors.detail = "Type detail is required"
+      errors.detail = "Property type detail is required"
     } else if (formData.detail.trim().length < 2) {
-      errors.detail = "Type detail must be at least 2 characters"
+      errors.detail = "Property type detail must be at least 2 characters"
     }
     setValidationErrors(errors)
     return !errors.detail
@@ -40,7 +42,7 @@ const CreatePropertyTypeForm = ({ onCancel, onSuccess }: CreatePropertyTypeFormP
   const handleSuccessClose = () => {
     setIsClosing(true)
     setTimeout(() => {
-      onSuccess()
+      onSuccess(formData)
     }, 300)
   }
 
@@ -49,9 +51,13 @@ const CreatePropertyTypeForm = ({ onCancel, onSuccess }: CreatePropertyTypeFormP
     if (!validateForm()) return
     setIsSubmitting(true)
     try {
-      const result = await PropertyTypeService.instance.createNewPropertyType(formData)
+      const result = await PropertyTypeService.instance.updatePropertyType({
+        id: formData.id,
+        detail: formData.detail,
+      } as ReqUpdatePropertyTypeDto)
+
       if (isLeft(result)) {
-        setErrorLabel(result.value.message || "Failed to create property type")
+        setErrorLabel(result.value.message || "Failed to update property type")
         setIsSubmitting(false)
         return
       }
@@ -77,7 +83,7 @@ const CreatePropertyTypeForm = ({ onCancel, onSuccess }: CreatePropertyTypeFormP
             </div>
             <div className="text-center">
               <h3 className="text-lg font-semibold text-gray-900 mb-1">Success!</h3>
-              <p className="text-sm text-gray-600">Property type "{formData.detail}" has been created</p>
+              <p className="text-sm text-gray-600">Property type has been updated</p>
             </div>
           </div>
         </div>
@@ -87,16 +93,28 @@ const CreatePropertyTypeForm = ({ onCancel, onSuccess }: CreatePropertyTypeFormP
       {isSubmitting && !isSuccess && (
         <div className="absolute inset-0 bg-white/50 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
           <div className="bg-white rounded-lg shadow-lg p-4 flex items-center space-x-3">
-            <Loader2 className="w-5 h-5 mr-2 text-blue-600 animate-spin" />
-            <span className="text-sm font-medium text-gray-700">Creating property type...</span>
+            <Loader2 className="w-5 h-5 mr-2 animate-spin text-blue-600" />
+            <span className="text-sm font-medium text-gray-700">Updating property type...</span>
           </div>
         </div>
       )}
 
       {/* Form Content */}
       <div className={`space-y-4 transition-opacity duration-200 ${isSuccess ? 'opacity-30' : 'opacity-100'}`}>
+        {/* Property Type ID */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Type Name *</label>
+          <label className="block text-sm font-medium text-foreground mb-2">Property Type ID</label>
+          <input
+            type="text"
+            value={formData.id}
+            readOnly
+            className="w-full px-3 py-2 bg-gray-100 border border-border rounded-lg text-muted-foreground text-sm sm:text-base opacity-70"
+            disabled
+          />
+        </div>
+        {/* Property Type Name */}
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">Property Type Name *</label>
           <input
             type="text"
             value={formData.detail}
@@ -108,7 +126,7 @@ const CreatePropertyTypeForm = ({ onCancel, onSuccess }: CreatePropertyTypeFormP
               setErrorLabel("")
             }}
             placeholder="e.g., Condominium"
-            className={`w-full px-3 py-2 bg-input border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground text-sm sm:text-base ${
+            className={`w-full px-3 py-2 bg-input border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground text-sm sm:text-base transition-colors ${
               validationErrors.detail ? "border-red-500" : "border-border"
             } ${isSubmitting || isSuccess ? "opacity-50" : ""}`}
             disabled={isSubmitting || isSuccess}
@@ -142,15 +160,15 @@ const CreatePropertyTypeForm = ({ onCancel, onSuccess }: CreatePropertyTypeFormP
         <button
           onClick={handleSubmit}
           disabled={!formData.detail.trim() || isSubmitting || isSuccess}
-          className="px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2 flex items-center justify-center min-w-[160px]"
+          className="px-4 py-2 bg-yellow-200 text-yellow-900 rounded-lg hover:bg-yellow-300 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2 flex items-center justify-center min-w-[160px]"
         >
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Creating...
+              Updating...
             </>
           ) : (
-            "Create Type"
+            "Update"
           )}
         </button>
       </div>
@@ -158,4 +176,4 @@ const CreatePropertyTypeForm = ({ onCancel, onSuccess }: CreatePropertyTypeFormP
   )
 }
 
-export default CreatePropertyTypeForm
+export default UpdatePropertyTypeForm

@@ -6,16 +6,19 @@ import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  EllipsisVerticalIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline"
 import Modal from "@/components/modal/Modal"
 import CreatePropertyTypeForm from "@/components/form/property/propertyType/CreatePropertyTypeForm"
+import UpdatePropertyTypeForm from "@/components/form/property/propertyType/UpdatePropertyTypeForm"
+import CommonDeleteForm from "@/components/form/delete/CommonDeleteForm"
 import { usePropertyTypeContext } from "@/context/store/PropertyTypeStore"
 import formatDate from "@/utility/utility"
 import { PropertyTypeService } from "@/service/property/PropertyTypeService"
 import ResEntryPropertyTypeDto from "@/domain/property/propertyType/ResEntryPropertyTypeDto"
+import { isLeft } from "@/implementation/Either"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const PropertyTypeTable = () => {
   const [searchTerm, setSearchTerm] = useState("")
@@ -24,8 +27,15 @@ const PropertyTypeTable = () => {
   const [sortColumn, setSortColumn] = useState<keyof ResEntryPropertyTypeDto>("detail")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editDetail, setEditDetail] = useState<string>("")
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState("")
 
-  const { propertyTypes, refreshPropertyTypes } = usePropertyTypeContext()
+  const { propertyTypes, refreshPropertyTypes, loading } = usePropertyTypeContext()
 
   const filteredPropertyTypes = propertyTypes.filter((type) =>
     type.detail.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -56,10 +66,61 @@ const PropertyTypeTable = () => {
     }
   }
 
-  const handleCreateType = async (typeData: { detail: string }) => {
-    await PropertyTypeService.instance.createNewPropertyType(typeData)
+  // CREATE
+  const handleCreateType = async () => {
     await refreshPropertyTypes()
     setIsCreateModalOpen(false)
+  }
+
+  // EDIT
+  const handleEditClick = (id: string) => {
+    const type = propertyTypes.find(e => e.id === id)
+    if (type) {
+      setEditId(id)
+      setEditDetail(type.detail)
+      setIsEditModalOpen(true)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditModalOpen(false)
+    setEditId(null)
+    setEditDetail("")
+  }
+
+  const handleUpdateType = async () => {
+    await refreshPropertyTypes()
+    setIsEditModalOpen(false)
+    setEditId(null)
+    setEditDetail("")
+  }
+
+  // DELETE
+  const handleDeleteClick = (id: string) => {
+    setDeleteId(id)
+    setIsDeleteModalOpen(true)
+    setDeleteError("")
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return
+    setIsDeleting(true)
+    setDeleteError("")
+    const result = await PropertyTypeService.instance.deletePropertyType(deleteId)
+    setIsDeleting(false)
+    if (result && isLeft(result)) {
+      setDeleteError(result.value.message || "Failed to delete property type")
+      return
+    }
+    setIsDeleteModalOpen(false)
+    setDeleteId(null)
+    await refreshPropertyTypes()
+  }
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false)
+    setDeleteId(null)
+    setDeleteError("")
   }
 
   return (
@@ -96,74 +157,102 @@ const PropertyTypeTable = () => {
       {/* Desktop Table View */}
       <div className="hidden lg:block bg-card/60 backdrop-blur-xl border border-border rounded-xl overflow-hidden shadow-lg">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-muted/50 backdrop-blur-sm border-b border-border">
-                {[
-                  { key: "id", label: "ID" },
-                  { key: "detail", label: "Detail" },
-                  { key: "createdAt", label: "Created At" },
-                  { key: "updatedAt", label: "Updated At" },
-                ].map((column) => (
-                  <th
-                    key={column.key}
-                    onClick={() => handleSort(column.key as keyof ResEntryPropertyTypeDto)}
-                    className="px-6 py-4 text-left text-sm font-semibold text-foreground cursor-pointer hover:text-accent transition-colors select-none"
-                  >
-                    <div className="flex items-center gap-1">
-                      {column.label}
-                      {sortColumn === column.key && (
-                        <span className="text-accent">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                      )}
-                    </div>
-                  </th>
+          {loading ? (
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th className="px-6 py-4"><Skeleton className="h-4 w-24" /></th>
+                  <th className="px-6 py-4"><Skeleton className="h-4 w-24" /></th>
+                  <th className="px-6 py-4"><Skeleton className="h-4 w-24" /></th>
+                  <th className="px-6 py-4"><Skeleton className="h-4 w-24" /></th>
+                  <th className="px-6 py-4"><Skeleton className="h-4 w-24" /></th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...Array(5)].map((_, i) => (
+                  <tr key={i}>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-16" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-32" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-24" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-24" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-20" /></td>
+                  </tr>
                 ))}
-                <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedPropertyTypes.length > 0 ? (
-                paginatedPropertyTypes.map((type, index) => (
-                  <tr
-                    key={type.id}
-                    className={`border-b border-border hover:bg-muted/30 transition-colors ${
-                      index % 2 === 0 ? "bg-background/50" : "bg-muted/20"
-                    }`}
-                  >
-                    <td className="px-6 py-4 text-sm font-medium text-foreground">{type.id.slice(0,6)}</td>
-                    <td className="px-6 py-4 text-sm text-foreground font-medium">{type.detail}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(type.createdAt)}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(type.updatedAt)}</td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button className="p-1 text-muted-foreground hover:text-accent transition-colors">
-                          <PencilIcon className="w-4 h-4" />
-                        </button>
-                        <button className="p-1 text-muted-foreground hover:text-destructive transition-colors">
-                          <TrashIcon className="w-4 h-4" />
-                        </button>
-                        <button className="p-1 text-muted-foreground hover:text-foreground transition-colors">
-                          <EllipsisVerticalIcon className="w-4 h-4" />
-                        </button>
+              </tbody>
+            </table>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr className="bg-muted/50 backdrop-blur-sm border-b border-border">
+                  {[
+                    { key: "id", label: "ID" },
+                    { key: "detail", label: "Detail" },
+                    { key: "createdAt", label: "Created At" },
+                    { key: "updatedAt", label: "Updated At" },
+                  ].map((column) => (
+                    <th
+                      key={column.key}
+                      onClick={() => handleSort(column.key as keyof ResEntryPropertyTypeDto)}
+                      className="px-6 py-4 text-left text-sm font-semibold text-foreground cursor-pointer hover:text-accent transition-colors select-none"
+                    >
+                      <div className="flex items-center gap-1">
+                        {column.label}
+                        {sortColumn === column.key && (
+                          <span className="text-accent">{sortDirection === "asc" ? "↑" : "↓"}</span>
+                        )}
+                      </div>
+                    </th>
+                  ))}
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedPropertyTypes.length > 0 ? (
+                  paginatedPropertyTypes.map((type, index) => (
+                    <tr
+                      key={type.id}
+                      className={`border-b border-border hover:bg-muted/30 transition-colors ${
+                        index % 2 === 0 ? "bg-background/50" : "bg-muted/20"
+                      }`}
+                    >
+                      <td className="px-6 py-4 text-sm font-medium text-foreground">{type.id.slice(0,6)}</td>
+                      <td className="px-6 py-4 text-sm text-foreground font-medium">{type.detail}</td>
+                      <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(type.createdAt)}</td>
+                      <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(type.updatedAt)}</td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            className="p-1 text-muted-foreground hover:text-accent transition-colors"
+                            onClick={() => handleEditClick(type.id)}
+                          >
+                            <PencilIcon className="w-4 h-4" />
+                          </button>
+                          <button
+                            className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                            onClick={() => handleDeleteClick(type.id)}
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                          <MagnifyingGlassIcon className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                        <p className="text-muted-foreground">No property types found</p>
+                        <p className="text-sm text-muted-foreground">Try adjusting your search</p>
                       </div>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
-                        <MagnifyingGlassIcon className="w-6 h-6 text-muted-foreground" />
-                      </div>
-                      <p className="text-muted-foreground">No property types found</p>
-                      <p className="text-sm text-muted-foreground">Try adjusting your search</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* Pagination */}
@@ -213,50 +302,110 @@ const PropertyTypeTable = () => {
 
       {/* Mobile Card View */}
       <div className="lg:hidden space-y-4">
-        {paginatedPropertyTypes.length > 0 ? (
-          paginatedPropertyTypes.map((type) => (
-            <div
-              key={type.id}
-              className="bg-card/60 backdrop-blur-xl border border-border rounded-xl p-4 shadow-lg hover:bg-card/80 transition-all duration-200"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1 space-y-2">
-                  <h3 className="font-semibold text-foreground text-lg">{type.detail}</h3>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                      {type.id.slice(0,6)}
-                    </span>
-                  </div>
-                  <p className="text-muted-foreground text-sm">Created: {formatDate(type.createdAt)}</p>
-                  <p className="text-muted-foreground text-sm">Updated: {formatDate(type.updatedAt)}</p>
-                </div>
-                <div className="flex items-center gap-2 ml-4">
-                  <button className="p-2 text-muted-foreground hover:text-accent hover:bg-accent/10 rounded-lg transition-colors">
-                    <PencilIcon className="w-5 h-5" />
-                  </button>
-                  <button className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
-                    <TrashIcon className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
+        {loading ? (
+          [...Array(3)].map((_, i) => (
+            <div key={i} className="bg-card/60 border border-border rounded-xl p-4 shadow-lg">
+              <Skeleton className="h-6 w-1/2 mb-2" />
+              <Skeleton className="h-4 w-1/3 mb-2" />
+              <Skeleton className="h-4 w-1/4 mb-2" />
+              <Skeleton className="h-4 w-full" />
             </div>
           ))
         ) : (
-          <div className="bg-card/60 backdrop-blur-xl border border-border rounded-xl p-8 text-center">
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
-                <MagnifyingGlassIcon className="w-6 h-6 text-muted-foreground" />
+          paginatedPropertyTypes.length > 0 ? (
+            paginatedPropertyTypes.map((type) => (
+              <div
+                key={type.id}
+                className="bg-card/60 backdrop-blur-xl border border-border rounded-xl p-4 shadow-lg hover:bg-card/80 transition-all duration-200"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 space-y-2">
+                    <h3 className="font-semibold text-foreground text-lg">{type.detail}</h3>
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                        {type.id.slice(0,6)}
+                      </span>
+                    </div>
+                    <p className="text-muted-foreground text-sm">Created: {formatDate(type.createdAt)}</p>
+                    <p className="text-muted-foreground text-sm">Updated: {formatDate(type.updatedAt)}</p>
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    <button
+                      className="p-2 text-muted-foreground hover:text-accent hover:bg-accent/10 rounded-lg transition-colors"
+                      onClick={() => handleEditClick(type.id)}
+                    >
+                      <PencilIcon className="w-5 h-5" />
+                    </button>
+                    <button
+                      className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                      onClick={() => handleDeleteClick(type.id)}
+                    >
+                      <TrashIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
               </div>
-              <p className="text-foreground">No property types found</p>
-              <p className="text-sm text-muted-foreground">Try adjusting your search</p>
+            ))
+          ) : (
+            <div className="bg-card/60 backdrop-blur-xl border border-border rounded-xl p-8 text-center">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                  <MagnifyingGlassIcon className="w-6 h-6 text-muted-foreground" />
+                </div>
+                <p className="text-foreground">No property types found</p>
+                <p className="text-sm text-muted-foreground">Try adjusting your search</p>
+              </div>
             </div>
-          </div>
+          )
         )}
       </div>
 
       {/* Create Property Type Modal */}
-      <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create New Property Type">
-        <CreatePropertyTypeForm onSubmit={handleCreateType} onCancel={() => setIsCreateModalOpen(false)} />
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        title="Create New Property Type"
+        maxWidth="sm"
+      >
+        <CreatePropertyTypeForm
+          onCancel={() => setIsCreateModalOpen(false)}
+          onSuccess={handleCreateType}
+        />
+      </Modal>
+
+      {/* Update Property Type Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={handleCancelEdit}
+        title="Update Property Type"
+        maxWidth="sm"
+      >
+        {editId && (
+          <UpdatePropertyTypeForm
+            id={editId}
+            detail={editDetail}
+            onCancel={handleCancelEdit}
+            onSuccess={handleUpdateType}
+          />
+        )}
+      </Modal>
+
+      {/* Delete Property Type Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCancelDelete}
+        title="Delete Property Type"
+        maxWidth="sm"
+      >
+        {deleteId && (
+          <CommonDeleteForm
+            description={`Delete property type: "${propertyTypes.find(e => e.id === deleteId)?.detail}"? This action cannot be undone.`}
+            onConfirm={handleConfirmDelete}
+            onCancel={handleCancelDelete}
+            isSubmitting={isDeleting}
+            error={deleteError}
+          />
+        )}
       </Modal>
     </div>
   )

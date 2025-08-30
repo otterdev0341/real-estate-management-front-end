@@ -164,7 +164,7 @@ const DisplayImageAttachments = ({
                       </button>
                       <button
                         className="px-2 py-1 text-xs rounded bg-red-50 text-red-400 hover:bg-red-100"
-                        onClick={handleConfirmDelete}
+                        onClick={() => handleDeleteClick(file)}
                       >
                         Delete
                       </button>
