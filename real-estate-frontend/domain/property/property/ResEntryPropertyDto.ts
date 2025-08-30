@@ -1,0 +1,24 @@
+import FileUpload from "@/domain/uploadFile/FileUpload";
+
+export default interface ReqUpdatePropertyDto {
+  id: string;
+  name: string;
+  description: string;
+  specific: string;
+  highlight: string;
+  area: string;
+  price: string;
+  fsp: string;
+  maximumBudget: string;
+  currentExpense?: number;
+  budgetUsedPercent?: number;
+  propertyType?: string[];
+  propertyStatus: string;
+  ownerBy: string;
+  mapUrl: string;
+  lat: string;
+  lng: string;
+  files: FileUpload[];
+  createdAt: string;
+  updatedAt: string;
+}
