@@ -12,7 +12,7 @@ import {
   ChevronRightIcon,
 } from "@heroicons/react/24/outline"
 import Modal from "@/components/modal/Modal"
-import CreatePropertyForm from "@/components/form/property/CreatePropertyForm"
+import CreatePropertyForm from "@/components/form/property/property/CreatePropertyForm"
 
 interface Property {
   id: string

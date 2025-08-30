@@ -1,8 +1,10 @@
 import { ResEntryPropertyStatusDto } from "@/domain/property/propertyStatus/ResEntryPropertyStatusDto"
 import Either, { left, right } from "@/implementation/Either"
 import { BaseService } from "../base/BaseService"
-import { CreateFailed, FetchFailed, ServiceError, Unauthorized } from "@/implementation/ServiceError"
+import { CreateFailed, FetchFailed, ServiceError, Unauthorized, UpdateFailed } from "@/implementation/ServiceError"
 import { BaseQuery } from "@/domain/utility/BaseQueryDto"
+import ReqCreatePropertyStatusDto from "@/domain/property/propertyStatus/ReqCreatePropertyStatusDto"
+import ReqUpdatePropertyStatusDto from "@/domain/property/propertyStatus/ReqUpdatePropertyStatusDto"
 
 export class PropertyStatusService extends BaseService {
   private static _propertyStatusInstance: PropertyStatusService
@@ -18,7 +20,7 @@ export class PropertyStatusService extends BaseService {
     return PropertyStatusService._propertyStatusInstance
   }
 
-  async createNewPropertyStatus(data: { detail: string }): Promise<Either<ServiceError, ResEntryPropertyStatusDto>> {
+  async createNewPropertyStatus(reqCreatePropertyStatusDto: ReqCreatePropertyStatusDto): Promise<Either<ServiceError, ResEntryPropertyStatusDto>> {
     try {
       if (!this.isTokenExist()) {
         return left(Unauthorized.create("PropertyStatusService", "No authentication token found."));
@@ -30,12 +32,16 @@ export class PropertyStatusService extends BaseService {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(reqCreatePropertyStatusDto),
       });
 
       if (!res.ok) {
         if (res.status === 401) {
           return left(Unauthorized.create("PropertyStatusService", `Authorization failed to create property status: ${res.statusText}`, new Error(res.statusText)));
+        }
+        if (res.status === 400) {
+          const errorJson = await res.json();
+          return left(UpdateFailed.create("PropertyStatusService", errorJson.message || "Failed to create property status", new Error(errorJson.message)));
         }
         return left(CreateFailed.create("PropertyStatusService", `Failed to create property status: ${res.statusText}`, new Error(res.statusText)));
       }
@@ -105,12 +111,13 @@ export class PropertyStatusService extends BaseService {
     }
   }
 
-  async updatePropertyStatus(id: string, data: { detail: string }): Promise<Either<ServiceError, ResEntryPropertyStatusDto>> {
+  async updatePropertyStatus(reqUpdatePropertyStatusDto: ReqUpdatePropertyStatusDto): Promise<Either<ServiceError, ResEntryPropertyStatusDto>> {
     try {
       if (!this.isTokenExist()) {
         return left(Unauthorized.create("PropertyStatusService", "No authentication token found."));
       }
       const token = this.getUserToken().get();
+      const { id, ...data } = reqUpdatePropertyStatusDto;
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/property-status/${id}`, {
         method: "PUT",
         headers: {
@@ -123,6 +130,10 @@ export class PropertyStatusService extends BaseService {
       if (!res.ok) {
         if (res.status === 401) {
           return left(Unauthorized.create("PropertyStatusService", `Authorization failed to update property status: ${res.statusText}`, new Error(res.statusText)));
+        }
+        if (res.status === 400) {
+          const errorJson = await res.json();
+          return left(UpdateFailed.create("PropertyStatusService", errorJson.message || "Failed to update property status", new Error(errorJson.message)));
         }
         return left(FetchFailed.create("PropertyStatusService", `Failed to update property status: ${res.statusText}`, new Error(res.statusText)));
       }

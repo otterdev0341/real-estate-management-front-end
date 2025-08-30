@@ -1,8 +1,10 @@
 import ResEntryPropertyTypeDto from "@/domain/property/propertyType/ResEntryPropertyTypeDto"
 import Either, { left, right } from "@/implementation/Either"
 import { BaseService } from "../base/BaseService"
-import { CreateFailed, FetchFailed, ServiceError, Unauthorized } from "@/implementation/ServiceError"
+import { CreateFailed, FetchFailed, ServiceError, Unauthorized, UpdateFailed } from "@/implementation/ServiceError"
 import { BaseQuery } from "@/domain/utility/BaseQueryDto"
+import ReqCreatePropertyTypeDto from "@/domain/property/propertyType/ReqCreatePropertyTypeDto"
+import ReqUpdatePropertyTypeDto from "@/domain/property/propertyType/ReqUpdatePropertyTypeDto"
 
 export class PropertyTypeService extends BaseService {
   private static _propertyTypeInstance: PropertyTypeService
@@ -18,7 +20,7 @@ export class PropertyTypeService extends BaseService {
     return PropertyTypeService._propertyTypeInstance
   }
 
-  async createNewPropertyType(data: { detail: string }): Promise<Either<ServiceError, ResEntryPropertyTypeDto>> {
+  async createNewPropertyType(reqCreatePropertyTypeDto: ReqCreatePropertyTypeDto): Promise<Either<ServiceError, ResEntryPropertyTypeDto>> {
     try {
       if (!this.isTokenExist()) {
         return left(Unauthorized.create("PropertyTypeService", "No authentication token found."));
@@ -30,12 +32,16 @@ export class PropertyTypeService extends BaseService {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(reqCreatePropertyTypeDto),
       });
 
       if (!res.ok) {
         if (res.status === 401) {
           return left(Unauthorized.create("PropertyTypeService", `Authorization failed to create property type: ${res.statusText}`, new Error(res.statusText)));
+        }
+        if (res.status === 400) {
+          const errorJson = await res.json();
+          return left(UpdateFailed.create("PropertyTypeService", errorJson.message || "Failed to create property type", new Error(errorJson.message)));
         }
         return left(CreateFailed.create("PropertyTypeService", `Failed to create property type: ${res.statusText}`, new Error(res.statusText)));
       }
@@ -105,12 +111,13 @@ export class PropertyTypeService extends BaseService {
     }
   }
 
-  async updatePropertyType(id: string, data: { detail: string }): Promise<Either<ServiceError, ResEntryPropertyTypeDto>> {
+  async updatePropertyType(reqUpdatePropertyType: ReqUpdatePropertyTypeDto): Promise<Either<ServiceError, ResEntryPropertyTypeDto>> {
     try {
       if (!this.isTokenExist()) {
         return left(Unauthorized.create("PropertyTypeService", "No authentication token found."));
       }
       const token = this.getUserToken().get();
+      const { id, ...data } = reqUpdatePropertyType;
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/property-type/${id}`, {
         method: "PUT",
         headers: {
@@ -123,6 +130,10 @@ export class PropertyTypeService extends BaseService {
       if (!res.ok) {
         if (res.status === 401) {
           return left(Unauthorized.create("PropertyTypeService", `Authorization failed to update property type: ${res.statusText}`, new Error(res.statusText)));
+        }
+        if (res.status === 400) {
+          const errorJson = await res.json();
+          return left(UpdateFailed.create("PropertyTypeService", errorJson.message || "Failed to update property type", new Error(errorJson.message)));
         }
         return left(FetchFailed.create("PropertyTypeService", `Failed to update property type: ${res.statusText}`, new Error(res.statusText)));
       }

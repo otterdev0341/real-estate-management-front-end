@@ -11,7 +11,7 @@ import {
   ChevronRightIcon,
 } from "@heroicons/react/24/outline"
 import Modal from "@/components/modal/Modal"
-import CreatePropertyTypeForm from "@/components/form/property/CreatePropertyTypeForm"
+import CreatePropertyTypeForm from "@/components/form/property/propertyType/CreatePropertyTypeForm"
 import { usePropertyTypeContext } from "@/context/store/PropertyTypeStore"
 import formatDate from "@/utility/utility"
 import { PropertyTypeService } from "@/service/property/PropertyTypeService"
