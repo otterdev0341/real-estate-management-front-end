@@ -1,0 +1,120 @@
+"use client"
+
+import { useState } from "react"
+import { useParams } from "next/navigation"
+import ViewPropertyForm from "@/components/form/property/property/ViewPropertyForm"
+import CommonAttachments from "@/components/attached/CommonAttachments"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import BaseFetchFileRelatedDto from "@/domain/utility/BaseFetchFileRelatedDto"
+import { PropertyService } from "@/service/property/PropertyService"
+import { isLeft, isRight } from "@/implementation/Either"
+import FileUpload from "@/domain/uploadFile/FileUpload"
+import BaseAttachFileToTarget from "@/domain/utility/BaseAttachFileToTarget"
+import BaseRemoveFileFromTarget from "@/domain/utility/BaseRemoveFileFromTarget"
+
+const TABS = [
+  { key: "detail", label: "View Details" },
+  { key: "attachment", label: "Attachments" },
+  { key: "forcast", label: "Forecast" },
+  { key: "propertyType", label: "Property Type" },
+  { key: "memo", label: "Linked Memos" },
+]
+
+const fetchFiles = async (dto: BaseFetchFileRelatedDto) => {
+  return PropertyService.instance.fetchPropertyFileRelated(dto)
+}
+
+export default function PropertyDetailPage() {
+  const [activeTab, setActiveTab] = useState("detail")
+  const [searchTerm, setSearchTerm] = useState("all")
+  const params = useParams()
+  const propertyId = typeof params.propertyId === "string" ? params.propertyId : ""
+
+  // Prepare attachFile and removeFile functions
+  const attachFile = async (dto: BaseAttachFileToTarget) => {
+    return PropertyService.instance.attachFileToProperty(dto)
+  }
+
+  const removeFile = async (dto: BaseRemoveFileFromTarget) => {
+    return PropertyService.instance.removeFileFromProperty({
+      ...dto,
+      targetId: propertyId,
+    })
+  }
+
+  return (
+    <div className="min-h-screen bg-background p-4 sm:p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <h1 className="text-2xl text-left font-bold sm:ml-6">Property Details</h1>
+        <div className="flex-1" />
+
+        {/* Mobile Tab Selector */}
+        <div className="sm:hidden mb-6">
+          <Select value={activeTab} onValueChange={setActiveTab}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select section" />
+            </SelectTrigger>
+            <SelectContent>
+              {TABS.map((tab) => (
+                <SelectItem key={tab.key} value={tab.key}>
+                  {tab.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Tabs for desktop */}
+        <div className="hidden sm:flex items-center border-b border-border mb-6">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => {
+                setActiveTab(tab.key)
+                if (tab.key === "attachment") setSearchTerm("all")
+              }}
+              className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+                activeTab === tab.key
+                  ? "border-violet-600 text-violet-700"
+                  : "border-transparent text-muted-foreground hover:text-violet-600"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab Content */}
+        <div className="bg-card/60 backdrop-blur-xl border border-border rounded-xl p-4 sm:p-6 shadow-lg relative">
+          {activeTab === "detail" && <ViewPropertyForm propertyId={propertyId} />}
+          {activeTab === "attachment" && (
+            <CommonAttachments
+              id={propertyId}
+              fetchFiles={fetchFiles}
+              attachFile={attachFile}
+              removeFile={removeFile}
+            />
+          )}
+          {activeTab === "forcast" && (
+            <div>
+              <h2 className="text-lg font-semibold mb-2">Forecast</h2>
+              <div className="text-muted-foreground">Forecast data and charts go here.</div>
+            </div>
+          )}
+          {activeTab === "propertyType" && (
+            <div>
+              <h2 className="text-lg font-semibold mb-2">Property Type</h2>
+              <div className="text-muted-foreground">Property type details go here.</div>
+            </div>
+          )}
+          {activeTab === "memo" && (
+            <div>
+              <h2 className="text-lg font-semibold mb-2">Linked Memos</h2>
+              <div className="text-muted-foreground">Linked memos and related info go here.</div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}

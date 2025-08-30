@@ -18,6 +18,7 @@ import { PropertyService } from "@/service/property/PropertyService"
 import { isLeft, isRight } from "@/implementation/Either"
 import ResEntryPropertyDto from "@/domain/property/property/ResEntryPropertyDto"
 import formatDate from "@/utility/utility"
+import { useRouter } from "next/navigation"
 
 const PropertyTable = () => {
   const [searchTerm, setSearchTerm] = useState("")
@@ -36,6 +37,7 @@ const PropertyTable = () => {
   const [editPropertyData, setEditPropertyData] = useState<Partial<ResEntryPropertyDto>>({})
 
   const { properties, loading, refreshProperties } = usePropertyContext()
+  const router = useRouter()
 
   // Filter and sort
   const filteredProperties = properties.filter((property) =>
@@ -122,6 +124,11 @@ const PropertyTable = () => {
     }
   }
 
+  // Add this handler for row click
+  const handleRowClick = (propertyId: string) => {
+    router.push(`/service/property/${propertyId}`)
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -205,9 +212,10 @@ const PropertyTable = () => {
                 paginatedProperties.map((property, index) => (
                   <tr
                     key={property.id}
-                    className={`border-b border-border hover:bg-muted/30 transition-colors ${
+                    className={`border-b border-border hover:bg-muted/30 transition-colors cursor-pointer ${
                       index % 2 === 0 ? "bg-background/50" : "bg-muted/20"
                     }`}
+                    onClick={() => handleRowClick(property.id)}
                   >
                     <td className="px-6 py-4 text-sm font-medium text-foreground">{property.id.slice(0, 6)}</td>
                     <td className="px-6 py-4 text-sm text-foreground font-medium">{property.name}</td>
@@ -228,13 +236,19 @@ const PropertyTable = () => {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           className="p-1 text-muted-foreground hover:text-accent transition-colors"
-                          onClick={() => handleEditClick(property)}
+                          onClick={e => {
+                            e.stopPropagation()
+                            handleEditClick(property)
+                          }}
                         >
                           <PencilIcon className="w-4 h-4" />
                         </button>
                         <button
                           className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                          onClick={() => handleDeleteClick(property)}
+                          onClick={e => {
+                            e.stopPropagation()
+                            handleDeleteClick(property)
+                          }}
                         >
                           <TrashIcon className="w-4 h-4" />
                         </button>
@@ -317,13 +331,18 @@ const PropertyTable = () => {
           paginatedProperties.map((property) => (
             <div
               key={property.id}
-              className="bg-card/60 backdrop-blur-xl border border-border rounded-xl p-4 shadow-lg hover:bg-card/80 transition-all duration-200"
+              className="bg-card/60 backdrop-blur-xl border border-border rounded-xl p-4 shadow-lg hover:bg-card/80 transition-all duration-200 cursor-pointer"
+              onClick={() => handleRowClick(property.id)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 space-y-2">
                   <h3 className="font-semibold text-foreground text-lg">{property.name}</h3>
                   <p className="text-muted-foreground text-sm">Owner: {property.ownerBy ?? "-"}</p>
-                  <p className="text-muted-foreground text-sm">Price: {property.price ?? "-"}</p>
+                  <p className="text-muted-foreground text-sm">
+                    Price: {property.price !== undefined && property.price !== null
+                      ? new Intl.NumberFormat().format(Number(property.price))
+                      : "-"}
+                  </p>
                   <p className="text-muted-foreground text-sm">
                     Status: {property.propertyStatus ?? "-"}
                   </p>
@@ -339,13 +358,19 @@ const PropertyTable = () => {
                 <div className="flex items-center gap-2 ml-4">
                   <button
                     className="p-2 text-muted-foreground hover:text-accent hover:bg-accent/10 rounded-lg transition-colors"
-                    onClick={() => handleEditClick(property)}
+                    onClick={e => {
+                      e.stopPropagation()
+                      handleEditClick(property)
+                    }}
                   >
                     <PencilIcon className="w-5 h-5" />
                   </button>
                   <button
                     className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                    onClick={() => handleDeleteClick(property)}
+                    onClick={e => {
+                      e.stopPropagation()
+                      handleDeleteClick(property)
+                    }}
                   >
                     <TrashIcon className="w-5 h-5" />
                   </button>

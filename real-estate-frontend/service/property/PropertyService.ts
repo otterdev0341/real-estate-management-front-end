@@ -298,5 +298,9 @@ export class PropertyService extends BaseService {
       return left(FetchFailed.create("PropertyService", "An unexpected error occurred during removing file from property.", error));
     }
 
-    }
+  }
+
+
+  
+
 }
