@@ -28,9 +28,9 @@ const navigationItems = [
   { name: "Memo", icon: PencilSquareIcon, href: "/service/memo" },
   { name: "File", icon: DocumentIcon, href: "#" },
   { name: "Report", icon: ChartBarIcon, href: "#" },
-  { name: "Sale", icon: ShoppingCartIcon, href: "#" },
-  { name: "Payment", icon: CreditCardIcon, href: "#" },
-  { name: "Investment", icon: ArrowTrendingUpIcon, href: "#" },
+  { name: "Sale", icon: ShoppingCartIcon, href: "/service/sale" },
+  { name: "Payment", icon: CreditCardIcon, href: "/service/payment" },
+  { name: "Investment", icon: ArrowTrendingUpIcon, href: "service/investment" },
 ]
 
 export function VerticalNavbar() {
@@ -61,7 +61,7 @@ export function VerticalNavbar() {
     setActiveItem(itemName)
     setIsMobileMenuOpen(false)
 
-    await new Promise((resolve) => setTimeout(resolve, 300))
+    await new Promise((resolve) => setTimeout(resolve, 400))
 
     router.push(href)
 
@@ -73,7 +73,7 @@ export function VerticalNavbar() {
       const rect = avatarRef.current.getBoundingClientRect()
       // Position dropdown to the right of avatar, vertically centered
       const top = rect.top + rect.height / 2
-      const left = rect.right + 12 // 12px margin from avatar
+      const left = rect.right + 4 // 12px margin from avatar
 
       setDropdownPosition({ top, left })
     }

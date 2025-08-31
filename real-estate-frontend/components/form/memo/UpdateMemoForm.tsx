@@ -1,12 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { MemoService } from "@/service/memo/MemoService"
 import { isLeft } from "@/implementation/Either"
 import { AlertCircle, Loader2, CheckCircle } from "lucide-react"
 import { useMemoTypeContext } from "@/context/store/MemoTypeStore"
 import CommonSelect, { CommonSelectItem } from "@/components/options/CommonSelect"
 import ReqUpdateMemoDto from "@/domain/memo/ReqUpdateMemoDto"
+import { Calendar } from "@/components/ui/calendar"
+import { Label } from "@/components/ui/label"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { ChevronDownIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { format } from "date-fns"
+import { useMemoContext } from "@/context/store/MemoStore"
 
 interface UpdateMemoFormProps {
   id: string
@@ -30,17 +37,24 @@ const UpdateMemoForm = ({
   onSuccess,
 }: UpdateMemoFormProps) => {
   const { memoTypes } = useMemoTypeContext()
+  const {refreshMemos} = useMemoContext();
   const [formData, setFormData] = useState<ReqUpdateMemoDto>({
     id,
     name,
     detail,
-    memoType
+    memoType,
+    createdAt,
   })
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({})
   const [errorLabel, setErrorLabel] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
+  const [datePickerOpen, setDatePickerOpen] = useState(false)
+  
+  const [createdDate, setCreatedDate] = useState<Date | undefined>(
+    createdAt ? new Date(createdAt) : undefined
+  )
 
   const memoTypeOptions: CommonSelectItem[] = memoTypes.map(type => ({
     id: type.id,
@@ -65,12 +79,6 @@ const UpdateMemoForm = ({
     setErrorLabel("")
   }
 
-  const handleMemoTypeSelect = (item: CommonSelectItem) => {
-    setFormData({ ...formData, memoType: item.value })
-    setValidationErrors({ ...validationErrors, memoType: "" })
-    setErrorLabel("")
-  }
-
   const handleClose = () => {
     setIsClosing(true)
     setTimeout(() => {
@@ -85,15 +93,29 @@ const UpdateMemoForm = ({
     }, 300)
   }
 
+  const handleDateChange = (date: Date | undefined) => {
+    setCreatedDate(date)
+    setDatePickerOpen(false)
+  }
+
   const handleSubmit = async () => {
     setErrorLabel("")
     if (!validateForm()) return
     setIsSubmitting(true)
     try {
       // Exclude createdAt and updatedAt from update payload
-      const { id, name, detail, memoType } = formData
-      const updatePayload = { id, name, detail, memoType }
-      const result = await MemoService.instance.updateMemo(updatePayload)
+      const { id, name, detail, memoType, createdAt } = formData
+      const updatePayload = {
+        id,
+        name,
+        detail,
+        memoType,
+        createdAt,
+      }
+
+      console.log("Update payload in update memo form:", updatePayload)
+
+      const result = await MemoService.instance.updateMemo({...updatePayload, createdAt: createdDate ? format(createdDate, "yyyy-MM-dd'T'HH:mm:ss") : ""})
       if (isLeft(result)) {
         setErrorLabel(result.value.message || "Failed to update memo")
         setIsSubmitting(false)
@@ -101,6 +123,7 @@ const UpdateMemoForm = ({
       }
       setIsSubmitting(false)
       setIsSuccess(true)
+      refreshMemos();
       setTimeout(() => {
         handleSuccessClose()
       }, 1500)
@@ -109,6 +132,7 @@ const UpdateMemoForm = ({
       setIsSubmitting(false)
     }
   }
+
 
   return (
     <div className={`relative transition-all duration-300 ${isClosing ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
@@ -139,6 +163,34 @@ const UpdateMemoForm = ({
 
       {/* Form Content */}
       <div className={`space-y-4 transition-opacity duration-200 ${isSuccess ? 'opacity-30' : 'opacity-100'}`}>
+        {/* DatePicker Field */}
+        <div>
+          <Label htmlFor="createdAt" className="block text-sm font-medium text-foreground mb-2">
+            Created At
+          </Label>
+          <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                id="createdAt"
+                className="w-48 justify-between font-normal"
+                type="button"
+                disabled={isSubmitting || isSuccess}
+              >
+                {createdDate ? createdDate.toLocaleDateString() : "Select date"}
+                <ChevronDownIcon />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={createdDate}
+                captionLayout="dropdown"
+                onSelect={handleDateChange}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
         {/* Memo ID */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">Memo ID</label>
@@ -187,7 +239,11 @@ const UpdateMemoForm = ({
           <CommonSelect
             items={memoTypeOptions}
             defaultValue={formData.memoType}
-            onSelect={handleMemoTypeSelect}
+            onSelect={item => {
+              setFormData({ ...formData, memoType: item.id })
+              setValidationErrors({ ...validationErrors, memoType: "" })
+              setErrorLabel("")
+            }}
             placeholder="Select or search memo type"
             disabled={isSubmitting || isSuccess}
           />

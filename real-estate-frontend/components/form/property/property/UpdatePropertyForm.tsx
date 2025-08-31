@@ -90,18 +90,6 @@ const UpdatePropertyForm = ({
     setErrorLabel("")
   }
 
-  const handleStatusSelect = (item: CommonSelectItem) => {
-    setFormData({ ...formData, propertyStatus: item.value })
-    setValidationErrors({ ...validationErrors, propertyStatus: "" })
-    setErrorLabel("")
-  }
-
-  const handleOwnerSelect = (item: CommonSelectItem) => {
-    setFormData({ ...formData, ownerBy: item.value })
-    setValidationErrors({ ...validationErrors, ownerBy: "" })
-    setErrorLabel("")
-  }
-
   const handleClose = () => {
     setIsClosing(true)
     setTimeout(() => {

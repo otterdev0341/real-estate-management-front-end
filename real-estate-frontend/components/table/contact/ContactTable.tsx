@@ -18,6 +18,7 @@ import formatDate from "@/utility/utility"
 import { ContactService } from "@/service/contact/ContactService"
 import { ContactDto } from "@/domain/contact/contact/ResEntryContactDto"
 import { isLeft } from "@/implementation/Either"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const ContactTable = () => {
   const [searchTerm, setSearchTerm] = useState("")
@@ -34,7 +35,7 @@ const ContactTable = () => {
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState("")
 
-  const { contacts, refreshContacts } = useContactContext()
+  const { contacts, refreshContacts, loading: contactsLoading } = useContactContext()
 
   const filteredContacts = contacts.filter((contact) => {
     const matchesSearch =
@@ -177,7 +178,19 @@ const ContactTable = () => {
               </tr>
             </thead>
             <tbody>
-              {paginatedContacts.length > 0 ? (
+              {contactsLoading ? (
+                // Skeleton rows while loading
+                Array.from({ length: 8 }).map((_, idx) => (
+                  <tr key={idx} className="border-b border-border">
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-2/3" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-1/2" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-1/3" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-1/2" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-1/2" /></td>
+                    <td className="px-6 py-4 text-right"><Skeleton className="h-8 w-16" /></td>
+                  </tr>
+                ))
+              ) : paginatedContacts.length > 0 ? (
                 paginatedContacts.map((contact, index) => (
                   <tr
                     key={contact.id}
@@ -272,7 +285,17 @@ const ContactTable = () => {
 
       {/* Mobile Card View */}
       <div className="lg:hidden space-y-4">
-        {paginatedContacts.length > 0 ? (
+        {contactsLoading ? (
+          Array.from({ length: 4 }).map((_, idx) => (
+            <div key={idx} className="bg-card/60 border border-border rounded-xl p-4 shadow-lg">
+              <Skeleton className="h-6 w-1/2 mb-2" />
+              <Skeleton className="h-4 w-1/3 mb-1" />
+              <Skeleton className="h-4 w-1/4 mb-1" />
+              <Skeleton className="h-4 w-1/3 mb-1" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          ))
+        ) : paginatedContacts.length > 0 ? (
           paginatedContacts.map((contact) => (
             <div
               key={contact.id}

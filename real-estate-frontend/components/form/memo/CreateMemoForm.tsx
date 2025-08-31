@@ -4,6 +4,12 @@ import { useState, useRef } from "react"
 import { Paperclip } from "lucide-react"
 import { useMemoTypeContext } from "@/context/store/MemoTypeStore"
 import CommonSelect, { CommonSelectItem } from "@/components/options/CommonSelect"
+import { Calendar } from "@/components/ui/calendar"
+import { Label } from "@/components/ui/label"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { ChevronDownIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { format } from "date-fns"
 
 interface FileUpload {
   name: string
@@ -21,12 +27,14 @@ const initialState = {
   detail: "",
   memoType: "",
   files: [] as FileUpload[],
+  createdAt: undefined as Date | undefined,
 }
 
 const CreateMemoForm = ({ onSubmit, onCancel }: CreateMemoFormProps) => {
   const { memoTypes, loading } = useMemoTypeContext()
   const [formData, setFormData] = useState(initialState)
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({})
+  const [datePickerOpen, setDatePickerOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const memoTypeOptions: CommonSelectItem[] = memoTypes.map(type => ({
@@ -71,9 +79,21 @@ const CreateMemoForm = ({ onSubmit, onCancel }: CreateMemoFormProps) => {
     fileInputRef.current?.click()
   }
 
+  const handleDateChange = (date: Date | undefined) => {
+    setFormData({ ...formData, createdAt: date })
+    setDatePickerOpen(false)
+  }
+
   const handleSubmit = () => {
     if (!validateForm()) return
-    if (onSubmit) onSubmit(formData)
+    const submitData = {
+      ...formData,
+      // Format date as yyyy-MM-ddTHH:mm:ss (no milliseconds, no Z)
+      createdAt: formData.createdAt
+        ? format(formData.createdAt, "yyyy-MM-dd'T'HH:mm:ss")
+        : undefined,
+    }
+    if (onSubmit) onSubmit(submitData)
   }
 
   const getAttachmentText = () => {
@@ -152,6 +172,32 @@ const CreateMemoForm = ({ onSubmit, onCancel }: CreateMemoFormProps) => {
               ))}
             </ul>
           )}
+        </div>
+        <div>
+          <Label htmlFor="createdAt" className="block text-sm font-medium text-foreground mb-2">
+            Created At
+          </Label>
+          <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                id="createdAt"
+                className="w-48 justify-between font-normal"
+                type="button"
+              >
+                {formData.createdAt ? formData.createdAt.toLocaleDateString() : "Select date"}
+                <ChevronDownIcon />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={formData.createdAt}
+                captionLayout="dropdown"
+                onSelect={handleDateChange}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
       {/* Form Footer */}

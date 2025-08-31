@@ -34,6 +34,10 @@ export class MemoService extends BaseService {
     }
     const token = this.getUserToken().get();
 
+    for (const [key, value] of Object.entries(reqCreateMemoDto)) {
+      console.log(`${key}: ${value}`);
+    }
+
     // Build FormData for multipart
     const formData = new FormData();
     Object.entries(reqCreateMemoDto).forEach(([key, value]) => {
@@ -141,14 +145,28 @@ export class MemoService extends BaseService {
         return left(Unauthorized.create("MemoService", "No authentication token found."));
       }
       const token = this.getUserToken().get();
-      const { id, ...data } = reqUpdateMemoDto;
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/memo/${id}`, {
+
+      // Build FormData for multipart
+      const formData = new FormData();
+      Object.entries(reqUpdateMemoDto).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          if (value instanceof File || value instanceof Blob) {
+            formData.append(key, value);
+          } else if (Array.isArray(value)) {
+            value.forEach((item) => formData.append(key, item));
+          } else {
+            formData.append(key, value as string);
+          }
+        }
+      });
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/memo/${reqUpdateMemoDto.id}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
+          // Do not set Content-Type, browser will set it for FormData
         },
-        body: JSON.stringify(data),
+        body: formData,
       });
 
       if (!res.ok) {
@@ -163,6 +181,7 @@ export class MemoService extends BaseService {
       }
 
       const responseData: ResEntryMemoDto = await res.json();
+      console.log("Updated memo data:", responseData);
       return right(responseData);
     } catch (error) {
       return left(FetchFailed.create("MemoService", "An unexpected error occurred during updating memo.", error));

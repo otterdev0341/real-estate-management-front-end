@@ -6,6 +6,7 @@ import ViewPropertyForm from "@/components/form/property/property/ViewPropertyFo
 import CommonAttachments from "@/components/attached/CommonAttachments"
 import PropertyTypeTransferList from "@/components/form/property/property/transferList/PropertyTypeTransferList"
 import MemoTransferList from "@/components/form/memo/tranferList/MemoTransferList"
+import ViewPropertyMemo from "@/components/form/property/displayMemoList/ViewPropertyMemo"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import BaseFetchFileRelatedDto from "@/domain/utility/BaseFetchFileRelatedDto"
 import { PropertyService } from "@/service/property/PropertyService"
@@ -19,8 +20,7 @@ const TABS = [
   { key: "attachment", label: "Attachments" },
   { key: "forcast", label: "Forecast" },
   { key: "propertyType", label: "Property Type" },
-  { key: "property", label: "Assign To Memos" }, // Add property tab for memo transfer
-  { key: "memo", label: "Linked Memos" },
+  { key: "memo", label: "Memos" },
 ]
 
 const fetchFiles = async (dto: BaseFetchFileRelatedDto) => {
@@ -119,10 +119,7 @@ export default function PropertyDetailPage() {
             </div>
           )}
           {activeTab === "memo" && (
-            <div>
-              <h2 className="text-lg font-semibold mb-2">Linked Memos</h2>
-              <div className="text-muted-foreground">Linked memos and related info go here.</div>
-            </div>
+            <ViewPropertyMemo propertyId={propertyId} />
           )}
         </div>
       </div>

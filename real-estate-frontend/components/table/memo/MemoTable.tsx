@@ -23,6 +23,7 @@ import ResEntryMemoDto from "@/domain/memo/ResEntryMemoDto"
 import UpdateMemoForm from "@/components/form/memo/UpdateMemoForm"
 import FileUpload from "@/domain/uploadFile/FileUpload"
 import { useRouter } from "next/navigation"
+import { Loader2 } from "lucide-react"
 
 const MemoTable = () => {
   const [searchTerm, setSearchTerm] = useState("")
@@ -41,6 +42,7 @@ const MemoTable = () => {
 
   const { memos, refreshMemos } = useMemoContext()
   const router = useRouter()
+  const [isNavigating, setIsNavigating] = useState(false)
 
   // Filter and sort
   const filteredMemos = memos.filter((memo) =>
@@ -133,11 +135,15 @@ const MemoTable = () => {
 
   // Add this handler
   const handleRowClick = (memoId: string) => {
-    router.push(`/service/memo/${memoId}`)
+    setIsNavigating(true)
+    // Optional: add a small delay for UX
+    setTimeout(() => {
+      router.push(`/service/memo/${memoId}`)
+    }, 400)
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -179,7 +185,7 @@ const MemoTable = () => {
                   { key: "detail", label: "Detail" },
                   { key: "memoType", label: "Memo Type" },
                   { key: "attachment", label: "Attachment" },
-                  { key: "updatedAt", label: "Updated At" },
+                  { key: "createdAt", label: "Created At" }, // <-- changed here
                 ].map((column) => (
                   <th
                     key={column.key}
@@ -251,7 +257,7 @@ const MemoTable = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(memo.updatedAt)}</td>
+                      <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(memo.createdAt)}</td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
@@ -376,7 +382,7 @@ const MemoTable = () => {
                     )}
                     {/* Updated At (smaller font) */}
                     <p className="text-muted-foreground text-xs mt-1">
-                      Updated: {formatDate(memo.updatedAt)}
+                      Created: {formatDate(memo.createdAt)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 ml-4">
@@ -440,6 +446,7 @@ const MemoTable = () => {
             id={editMemoData.id ?? ""}
             name={editMemoData.name ?? ""}
             detail={editMemoData.detail ?? ""}
+            memoType={editMemoData.memoType ?? ""}
             createdAt={editMemoData.createdAt ?? ""}
             updatedAt={editMemoData.updatedAt ?? ""}
             onCancel={handleCancelEdit}
@@ -465,6 +472,16 @@ const MemoTable = () => {
           />
         )}
       </Modal>
+
+      {/* Navigation loading overlay */}
+      {isNavigating && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="w-10 h-10 animate-spin text-accent" />
+            <span className="text-lg text-accent font-semibold">Loading memo...</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator"
 import { PropertyService } from "@/service/property/PropertyService"
 import { FaEye } from "react-icons/fa"
 import { useRouter } from "next/navigation"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface MemoTransferListProps {
   memoId: string
@@ -27,10 +28,12 @@ const MemoTransferList = ({ memoId }: MemoTransferListProps) => {
   const [search, setSearch] = useState("")
   const [assigningId, setAssigningId] = useState<string | null>(null)
   const [removingId, setRemovingId] = useState<string | null>(null)
+  const [assignedLoading, setAssignedLoading] = useState(true)
 
   // Fetch assigned properties for this memo using MemoService
   useEffect(() => {
     const fetchAssigned = async () => {
+      setAssignedLoading(true)
       setError("")
       const result = await MemoService.instance.fetchAllPropertiesByMemoId(memoId)
       if (isLeft(result)) {
@@ -39,6 +42,7 @@ const MemoTransferList = ({ memoId }: MemoTransferListProps) => {
       } else {
         setRight(result.value)
       }
+      setAssignedLoading(false)
     }
     fetchAssigned()
   }, [memoId, properties])
@@ -88,7 +92,7 @@ const MemoTransferList = ({ memoId }: MemoTransferListProps) => {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold text-sm text-foreground">Available Properties</h3>
-          <Badge variant="secondary" className="text-xs">{filteredLeft.length}</Badge>
+          <Badge variant="secondary" className="text-xs">{assignedLoading ? 0 : filteredLeft.length}</Badge>
         </div>
         <input
           type="text"
@@ -96,15 +100,25 @@ const MemoTransferList = ({ memoId }: MemoTransferListProps) => {
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="border rounded px-2 py-1 text-xs w-full sm:w-32"
+          disabled={assignedLoading}
         />
       </div>
       <ScrollArea className="h-64 md:h-80">
         <div className="grid grid-cols-1 gap-3">
-          {propertyLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
-              <span className="ml-2 text-sm text-muted-foreground">Loading...</span>
-            </div>
+          {propertyLoading || assignedLoading ? (
+            // Skeletons for loading state
+            Array.from({ length: 5 }).map((_, idx) => (
+              <Card key={idx} className="flex flex-row items-center justify-between p-3 gap-2">
+                <div className="flex-1 min-w-0">
+                  <Skeleton className="h-4 w-2/3 mb-2" />
+                  <Skeleton className="h-3 w-1/3" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                </div>
+              </Card>
+            ))
           ) : filteredLeft.length === 0 ? (
             <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
               No properties available
@@ -157,7 +171,7 @@ const MemoTransferList = ({ memoId }: MemoTransferListProps) => {
     </div>
   )
 
-  // Render right card list
+  // Render right card list (add skeleton for loading assigned properties)
   const renderRightList = () => (
     <div className="flex-1 space-y-3">
       <div className="flex items-center gap-2">
@@ -166,7 +180,20 @@ const MemoTransferList = ({ memoId }: MemoTransferListProps) => {
       </div>
       <ScrollArea className="h-64 md:h-80">
         <div className="grid grid-cols-1 gap-3">
-          {right.length === 0 ? (
+          {propertyLoading ? (
+            Array.from({ length: 3 }).map((_, idx) => (
+              <Card key={idx} className="flex flex-row items-center p-3 gap-2">
+                <div className="flex-1 min-w-0">
+                  <Skeleton className="h-4 w-2/3 mb-2" />
+                  <Skeleton className="h-3 w-1/3" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                </div>
+              </Card>
+            ))
+          ) : right.length === 0 ? (
             <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
               No properties assigned
             </div>
