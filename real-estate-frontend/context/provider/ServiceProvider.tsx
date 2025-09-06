@@ -8,6 +8,7 @@ import { MemoTypeProvider } from "../store/MemoTypeStore";
 import { PropertyStatusProvider } from "../store/PropertyStatusStore";
 import { PropertyProvider } from "../store/PropertyStore";
 import { PropertyTypeProvider } from "../store/PropertyTypeStore";
+import { SaleProvider } from "../store/SaleStore";
 
 
 export default function ServiceLayout({ children }: { children: React.ReactNode }) {
@@ -21,7 +22,9 @@ export default function ServiceLayout({ children }: { children: React.ReactNode 
                 <PropertyTypeProvider>
                   <MemoProvider>
                     <PropertyProvider>
+                      <SaleProvider>
                       {children}
+                      </SaleProvider>
                     </PropertyProvider>
                 </MemoProvider>
               </PropertyTypeProvider>

@@ -268,7 +268,7 @@ export class PropertyService extends BaseService {
         }
         return left(FetchFailed.create("PropertyService", `Failed to attach file to property: ${res.statusText}`, new Error(res.statusText)));
       }
-
+      
       return right(undefined);
     } catch (error) {
       return left(FetchFailed.create("PropertyService", "An unexpected error occurred during attaching file to property.", error));

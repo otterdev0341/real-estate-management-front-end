@@ -18,6 +18,7 @@ export default interface ResEntryPropertyDto {
   mapUrl: string;
   lat: string;
   lng: string;
+  sold?: boolean;
   files: FileUpload[];
   createdAt: string;
   updatedAt: string;

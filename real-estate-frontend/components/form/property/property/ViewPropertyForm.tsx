@@ -224,6 +224,24 @@ const ViewPropertyForm = ({ propertyId }: ViewPropertyFormProps) => {
                     : "-"}
                 </div>
               </div>
+              <div>
+                <div className="text-sm font-semibold text-gray-600 mb-2">Sale</div>
+                <div>
+                  {property.sold === true ? (
+                    <span className="inline-block px-3 py-1 rounded-lg bg-orange-50 text-orange-700 border border-orange-200 font-semibold">
+                      Case Close
+                    </span>
+                  ) : property.sold === false ? (
+                    <span className="inline-block px-3 py-1 rounded-lg bg-green-50 text-green-700 border border-green-200 font-semibold">
+                      Avaliable
+                    </span>
+                  ) : (
+                    <span className="inline-block px-3 py-1 rounded-lg bg-gray-50 text-gray-500 font-semibold">
+                      -
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
             <div className="space-y-4">
               <div>
