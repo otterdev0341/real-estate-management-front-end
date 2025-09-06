@@ -65,7 +65,7 @@ export class PropertyTypeService extends BaseService {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
-          "body": JSON.stringify(query)
+          
         },
       });
 
@@ -77,6 +77,7 @@ export class PropertyTypeService extends BaseService {
       }
 
       const json = await res.json();
+      console.log("Fetch All Property Types Response:", json);
       const items: ResEntryPropertyTypeDto[] = json.data?.items ?? [];
       return right(items);
     } catch (error) {

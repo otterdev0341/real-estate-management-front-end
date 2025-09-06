@@ -60,7 +60,7 @@ export class ContactService extends BaseService {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
-          "body": JSON.stringify(query)
+          
         },
       });
 
@@ -72,6 +72,7 @@ export class ContactService extends BaseService {
       }
 
       const json = await res.json();
+      console.log("Fetch All Contacts Response:", json);
       const items: ContactDto[] = json.data?.items ?? [];
       return right(items);
     } catch (error) {

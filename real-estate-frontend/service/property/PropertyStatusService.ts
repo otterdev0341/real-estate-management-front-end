@@ -65,7 +65,7 @@ export class PropertyStatusService extends BaseService {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
-          "body": JSON.stringify(query)
+          
         },
       });
 

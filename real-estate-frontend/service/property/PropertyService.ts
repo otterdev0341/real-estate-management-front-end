@@ -479,22 +479,23 @@ export class PropertyService extends BaseService {
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/property/${propertyId}/property-type`, {
         method: "GET",
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          
+          "Authorization": `Bearer ${token}`
         }
       });
 
       if (!res.ok) {
         if (res.status === 401) {
-          return left(Unauthorized.create("PropertyService", `Authorization failed to fetch memos by property: ${res.statusText}`, new Error(res.statusText)));
+          return left(Unauthorized.create("PropertyService", `Authorization failed to fetch propertyType by property: ${res.statusText}`, new Error(res.statusText)));
         }
         if (res.status === 400) {
-          return left(UpdateFailed.create("PropertyService", `Failed to fetch property by property with BadRequest: ${res.statusText}`, new Error(res.statusText)));
+          return left(UpdateFailed.create("PropertyService", `Failed to fetch property type by property with BadRequest: ${res.statusText}`, new Error(res.statusText)));
         }
-        return left(FetchFailed.create("PropertyService", `Failed to fetch memo by property: ${res.statusText}`, new Error(res.statusText)));
+        return left(FetchFailed.create("PropertyService", `Failed to fetch property type by property: ${res.statusText}`, new Error(res.statusText)));
       }
 
       const json = await res.json();
+      console.log("Fetch All Property Types By PropertyId Response:", json);
       const items: ResEntryPropertyTypeDto[] = json.data?.items ?? [];
       return right(items);
       
