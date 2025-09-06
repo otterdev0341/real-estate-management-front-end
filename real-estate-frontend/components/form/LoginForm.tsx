@@ -5,6 +5,8 @@ import Link from "next/link"
 import { ReqLoginDto } from "@/domain/user/ReqLoginDto"
 import { UserData } from "@/domain/user/UserDataDto"
 import { redirect } from "next/navigation"
+import { AuthService } from "@/service/auth/authService"
+import { isLeft } from "@/implementation/Either"
 
 const LoginForm = () => {
   const [formData, setFormData] = useState({
@@ -37,57 +39,28 @@ const LoginForm = () => {
     }
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dto),
-      })
-
-      if (!res.ok) {
+      const result = await AuthService.instance.login(dto)
+      if (isLeft(result)) {
         setLoading(false)
-        const data = await res.json()
-        setError(data.message || "Login failed")
+        setError(result.value.message || "Login failed")
         return
       }
 
-      const data = await res.json()
-      if (data.data && data.data.token) {
-        const token = data.data.token
-        document.cookie = `token=${token}; path=/;`
+      const { token, user } = result.value
+      document.cookie = `token=${token}; path=/;`
+      setUserData(user)
+      sessionStorage.setItem("userData", JSON.stringify(user))
 
-        // Fetch user data from /auth/resme
-        const userRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/auth/resme`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        })
-
-        if (userRes.ok) {
-          const userDataResponse = await userRes.json()
-          setUserData(userDataResponse.data as UserData)
-          sessionStorage.setItem("userData", JSON.stringify(userDataResponse.data))
-
-          // Show green toast, then loading, then redirect
-          setSuccess("Login successful! Redirecting to Dashboard...")
-          setShowToast(true)
-          setTimeout(() => {
-            setShowToast(false)
-            setLoading(true)
-            setTimeout(() => {
-              setLoading(false)
-              redirect("/service/dashboard")
-            }, 1200)
-          }, 1500)
-        } else {
+      setSuccess("Login successful! Redirecting to Dashboard...")
+      setShowToast(true)
+      setTimeout(() => {
+        setShowToast(false)
+        setLoading(true)
+        setTimeout(() => {
           setLoading(false)
-          setError("Failed to fetch user data")
-        }
-      } else {
-        setLoading(false)
-        setError("No token received")
-      }
+          redirect("/service/dashboard")
+        }, 1200)
+      }, 1500)
     } catch (err) {
       setLoading(false)
       setError("Network error. Please try again.")
