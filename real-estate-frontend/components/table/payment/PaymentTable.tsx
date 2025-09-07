@@ -2,19 +2,59 @@ import { usePaymentContext } from "@/context/store/PaymentStore"
 import formatDate from "@/utility/utility"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useState } from "react"
-import { PlusIcon } from "@heroicons/react/24/outline"
+import { PlusIcon, PencilIcon, TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline"
 import Modal from "@/components/modal/Modal"
 import CreatePaymentForm from "@/components/form/payment/CreatePaymentForm"
+import UpdatePaymentForm from "@/components/form/payment/UpdatePaymentForm"
+import CommonDeleteForm from "@/components/form/delete/CommonDeleteForm"
+import { useRouter } from "next/navigation"
+import { PaymentService } from "@/service/payment/paymentService"
+import { isLeft } from "@/implementation/Either"
 
 const PaymentTable = () => {
   const { payments, loading, refreshPayments } = usePaymentContext()
   const [search, setSearch] = useState("")
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [updateId, setUpdateId] = useState<string | null>(null)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState("")
+  const router = useRouter()
 
   const handleOpenCreate = () => setIsCreateModalOpen(true)
   const handleCloseCreate = () => setIsCreateModalOpen(false)
   const handleCreateSuccess = async () => {
     setIsCreateModalOpen(false)
+    await refreshPayments()
+  }
+
+  const handleOpenUpdate = (id: string) => setUpdateId(id)
+  const handleCloseUpdate = () => setUpdateId(null)
+  const handleUpdateSuccess = async () => {
+    setUpdateId(null)
+    await refreshPayments()
+  }
+
+  const handleOpenDelete = (id: string) => {
+    setDeleteId(id)
+    setDeleteError("")
+  }
+  const handleCloseDelete = () => {
+    setDeleteId(null)
+    setDeleteError("")
+    setIsDeleting(false)
+  }
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return
+    setIsDeleting(true)
+    setDeleteError("")
+    const result = await PaymentService.instance.deletePayment(deleteId)
+    setIsDeleting(false)
+    if (isLeft(result)) {
+      setDeleteError(result.value.message || "Failed to delete payment")
+      return
+    }
+    setDeleteId(null)
     await refreshPayments()
   }
 
@@ -68,6 +108,7 @@ const PaymentTable = () => {
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Note</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Total</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Created At</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -80,6 +121,7 @@ const PaymentTable = () => {
                     <td className="px-6 py-4"><Skeleton className="h-4 w-1/2" /></td>
                     <td className="px-6 py-4"><Skeleton className="h-4 w-1/3" /></td>
                     <td className="px-6 py-4"><Skeleton className="h-4 w-1/2" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-4 w-1/2" /></td>
                   </tr>
                 ))
               ) : filteredPayments.length > 0 ? (
@@ -87,6 +129,7 @@ const PaymentTable = () => {
                   <tr
                     key={payment.id}
                     className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/service/payment/${payment.id}`)}
                   >
                     <td className="px-6 py-4 text-sm text-muted-foreground">{payment.id.slice(0, 6)}</td>
                     <td className="px-6 py-4 text-sm text-foreground">{payment.property}</td>
@@ -98,11 +141,35 @@ const PaymentTable = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-foreground">{payment.totalAmount?.toLocaleString()}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(payment.created?.toString())}</td>
+                    <td className="px-6 py-4 text-sm flex gap-2">
+                      <button
+                        type="button"
+                        className="p-2 rounded hover:bg-muted transition-colors"
+                        onClick={e => {
+                          e.stopPropagation()
+                          handleOpenUpdate(payment.id)
+                        }}
+                        title="Edit"
+                      >
+                        <PencilIcon className="h-5 w-5 text-primary" />
+                      </button>
+                      <button
+                        type="button"
+                        className="p-2 rounded hover:bg-muted transition-colors"
+                        onClick={e => {
+                          e.stopPropagation()
+                          handleOpenDelete(payment.id)
+                        }}
+                        title="Delete"
+                      >
+                        <TrashIcon className="w-5 h-5 text-destructive" />
+                      </button>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground text-sm">
+                  <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground text-sm">
                     No payments found.
                   </td>
                 </tr>
@@ -129,6 +196,7 @@ const PaymentTable = () => {
             <div
               key={payment.id}
               className="bg-card/60 border border-border rounded-xl p-4 shadow-lg hover:bg-card/80 transition-all duration-200 flex flex-col cursor-pointer"
+              onClick={() => router.push(`/service/payment/${payment.id}`)}
             >
               <div className="flex-1 space-y-2">
                 <h3 className="font-semibold text-foreground text-lg">
@@ -143,6 +211,30 @@ const PaymentTable = () => {
                 <p className="text-muted-foreground text-xs">
                   Total: {payment.totalAmount?.toLocaleString()}
                 </p>
+              </div>
+              <div className="flex gap-2 mt-2">
+                <button
+                  type="button"
+                  className="p-2 rounded hover:bg-muted transition-colors"
+                  onClick={e => {
+                    e.stopPropagation()
+                    handleOpenUpdate(payment.id)
+                  }}
+                  title="Edit"
+                >
+                  <PencilSquareIcon className="w-5 h-5 text-accent" />
+                </button>
+                <button
+                  type="button"
+                  className="p-2 rounded hover:bg-muted transition-colors"
+                  onClick={e => {
+                    e.stopPropagation()
+                    handleOpenDelete(payment.id)
+                  }}
+                  title="Delete"
+                >
+                  <TrashIcon className="w-5 h-5 text-destructive" />
+                </button>
               </div>
             </div>
           ))
@@ -169,6 +261,38 @@ const PaymentTable = () => {
         <CreatePaymentForm
           onSubmit={handleCreateSuccess}
           onCancel={handleCloseCreate}
+        />
+      </Modal>
+
+      {/* Update Payment Modal */}
+      <Modal
+        isOpen={!!updateId}
+        onClose={handleCloseUpdate}
+        title="Update Payment"
+        maxWidth="md"
+      >
+        {updateId && (
+          <UpdatePaymentForm
+            payment={payments.find(p => p.id === updateId)!}
+            onCancel={handleCloseUpdate}
+            onSuccess={handleUpdateSuccess}
+          />
+        )}
+      </Modal>
+
+      {/* Delete Payment Modal */}
+      <Modal
+        isOpen={!!deleteId}
+        onClose={handleCloseDelete}
+        title="Delete Payment"
+        maxWidth="sm"
+      >
+        <CommonDeleteForm
+          description={`Are you sure you want to delete this payment? This action cannot be undone.`}
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCloseDelete}
+          isSubmitting={isDeleting}
+          error={deleteError}
         />
       </Modal>
     </div>
