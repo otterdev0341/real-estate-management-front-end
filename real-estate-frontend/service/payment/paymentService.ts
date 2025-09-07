@@ -9,6 +9,7 @@ import BaseRemoveFileFromTarget from "@/domain/utility/BaseRemoveFileFromTarget"
 import ReqCreatePaymentDto from "@/domain/payment/create/ReqCreatePaymentDto"
 import ResEntryPaymentDto from "@/domain/payment/response/ResEntryPaymentDto"
 import ReqUpdatePaymentDto from "@/domain/payment/update/ReqUpdatePaymentDto"
+import ResEntryPaymentItemDto from "@/domain/payment/response/ResEntryPaymentItemDto"
 
 export class PaymentService extends BaseService {
     private static _paymentInstance: PaymentService;
@@ -32,7 +33,10 @@ export class PaymentService extends BaseService {
             const token = this.getUserToken().get();
 
             const formData = reqCreatePaymentDto.toFormData();
-
+            console.log("FormData entries:", formData);
+            for (const pair of formData.entries()) {
+                console.log(`${pair[0]}: ${pair[1]}`);
+            }
             const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/payment`, {
                 method: "POST",
                 headers: {
@@ -134,21 +138,33 @@ export class PaymentService extends BaseService {
             }
 
             const responseData = await res.json();
-            const items: ResEntryPaymentDto[] = responseData?.data?.items ?? [];
-            const payments = Array.isArray(items)
-                ? items.map((payment: any) =>
+            console.log("Raw payment fetch response data:", responseData);
+
+            // Correct mapping: responseData.data is an array of payments
+            const payments: ResEntryPaymentDto[] = Array.isArray(responseData.data)
+                ? responseData.data.map((payment: any) =>
                     new ResEntryPaymentDto(
                         payment.id,
-                        payment.transactionType,
-                        payment.note,
-                        payment.amount,
-                        payment.createdBy,
+                        payment.transaction,
+                        payment.property,
+                        payment.note ?? "",
+                        payment.contact,
+                        (payment.items ?? []).map((item: any) =>
+                            new ResEntryPaymentItemDto(
+                                item.id,
+                                item.paymentTransaction,
+                                item.expense,
+                                item.amount,
+                                item.price
+                            )
+                        ),
                         payment.createdAt,
-                        payment.updatedAt,
-                        payment.items ?? []
+                        payment.updatedAt
                     )
                 )
                 : [];
+
+            console.log("Fetched payments:", payments);
             return right(payments);
         } catch (error) {
             return left(FetchFailed.create("PaymentService", "An unexpected error occurred during fetching payments.", error));
@@ -205,16 +221,32 @@ export class PaymentService extends BaseService {
 
             const responseData = await res.json();
             const data = responseData.data;
+
+            // Map items if present
+            const items = Array.isArray(data.items)
+                ? data.items.map((item: any) =>
+                    new ResEntryPaymentItemDto(
+                        item.id,
+                        item.paymentTransaction,
+                        item.expense,
+                        item.amount,
+                        item.price
+                    )
+                )
+                : [];
+
+            // Map payment object
             const payment = new ResEntryPaymentDto(
                 data.id,
-                data.transactionType,
-                data.note,
-                data.amount,
-                data.createdBy,
+                data.transaction,
+                data.property,
+                data.note ?? "",
+                data.contact,
+                items,
                 data.createdAt,
-                data.updatedAt,
-                data.items ?? []
+                data.updatedAt
             );
+
             return right(payment);
         } catch (error) {
             return left(FetchFailed.create("PaymentService", "An unexpected error occurred during fetching payment.", error));

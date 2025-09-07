@@ -7,7 +7,7 @@ export default class ReqCreatePaymentDto extends BaseDateConverter {
     private contact: string; // UUID
     private property: string; // UUID
     private items: ReqCreatePaymentItemDto[];
-    private files: File[];
+    private files: Blob[];
 
     constructor(
         createdAt: string,
@@ -47,7 +47,7 @@ export default class ReqCreatePaymentDto extends BaseDateConverter {
         return this.items;
     }
 
-    public getFiles(): File[] {
+    public getFiles(): Blob[] {
         return this.files;
     }
 

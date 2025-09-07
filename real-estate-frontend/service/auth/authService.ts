@@ -4,6 +4,11 @@ import { CreateFailed, FetchFailed, ServiceError, Unauthorized } from "@/impleme
 import { ReqCreateUserDto } from "@/domain/user/ReqCreateUserDto"
 import { ReqLoginDto } from "@/domain/user/ReqLoginDto"
 import { UserData } from "@/domain/user/UserDataDto"
+import { usePropertyContext } from "@/context/store/PropertyStore"
+import { useContactContext } from "@/context/store/ContactStore"
+import { useMemoContext } from "@/context/store/MemoStore"
+import { useExpenseContext } from "@/context/store/ExpenseStore"
+import { useSaleContext } from "@/context/store/SaleStore"
 
 export class AuthService extends BaseService {
   private static _authInstance: AuthService
@@ -79,11 +84,25 @@ export class AuthService extends BaseService {
       const userDataResponse = await userRes.json()
       console.log("User Data Response in AuthService:", userDataResponse)
       const user = userDataResponse.data as UserData
-
+      await this.prepareStore();
       return right({ token, user })
     } catch (error) {
       return left(FetchFailed.create("AuthService", "An unexpected error occurred during login.", error))
     }
+    }
+
+    private async prepareStore() {
+      const {refreshProperties} = usePropertyContext();
+      const {refreshContacts} = useContactContext();
+      const {refreshMemos} = useMemoContext();
+      const {refreshExpenses} = useExpenseContext();
+      const {refreshSales} = useSaleContext();
+      
+      await refreshProperties();
+      await refreshContacts();
+      await refreshMemos();
+      await refreshExpenses();
+      await refreshSales();
     }
 
 }
