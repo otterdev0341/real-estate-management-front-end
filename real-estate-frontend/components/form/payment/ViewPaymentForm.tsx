@@ -6,6 +6,7 @@ import { isLeft } from "@/implementation/Either"
 import formatDate from "@/utility/utility"
 import { MoreVertical, Edit3, Trash2 } from "lucide-react"
 import Modal from "@/components/modal/Modal"
+import UpdatePaymentForm from "@/components/form/payment/UpdatePaymentForm"
 import CommonDeleteForm from "@/components/form/delete/CommonDeleteForm"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useRouter } from "next/navigation"
@@ -19,12 +20,14 @@ const ViewPaymentForm = ({ paymentId }: ViewPaymentFormProps) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [menuOpen, setMenuOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState("")
 
   const router = useRouter()
 
+  // Fetch payment data
   useEffect(() => {
     const fetchPayment = async () => {
       setLoading(true)
@@ -40,16 +43,34 @@ const ViewPaymentForm = ({ paymentId }: ViewPaymentFormProps) => {
     fetchPayment()
   }, [paymentId])
 
+  // Edit handlers
+  const handleEdit = () => {
+    setIsEditModalOpen(true)
+    setMenuOpen(false)
+  }
+  const handleCancelEdit = () => setIsEditModalOpen(false)
+  const handleUpdatePayment = async () => {
+    setIsEditModalOpen(false)
+    setLoading(true)
+    const result = await PaymentService.instance.fetchByPaymentId(paymentId)
+    if (isLeft(result)) {
+      setError(result.value.message || "Failed to fetch payment")
+      setPayment(null)
+    } else {
+      setPayment(result.value)
+    }
+    setLoading(false)
+  }
+
+  // Delete handlers
   const handleDelete = () => {
     setIsDeleteModalOpen(true)
     setMenuOpen(false)
   }
-
   const handleCancelDelete = () => {
     setIsDeleteModalOpen(false)
     setDeleteError("")
   }
-
   const handleConfirmDelete = async () => {
     setIsDeleting(true)
     setDeleteError("")
@@ -100,7 +121,13 @@ const ViewPaymentForm = ({ paymentId }: ViewPaymentFormProps) => {
                   onClick={() => setMenuOpen(false)}
                 />
                 <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
-                  {/* Edit button can be added here if you implement editing */}
+                  <button
+                    onClick={handleEdit}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-blue-700 hover:bg-blue-50 transition-colors border-b border-gray-100"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                    Edit Payment
+                  </button>
                   <button
                     onClick={handleDelete}
                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -181,6 +208,22 @@ const ViewPaymentForm = ({ paymentId }: ViewPaymentFormProps) => {
           </div>
         </div>
       </div>
+
+      {/* Edit Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={handleCancelEdit}
+        title="Update Payment"
+        maxWidth="md"
+      >
+        {payment && (
+          <UpdatePaymentForm
+            payment={payment}
+            onCancel={handleCancelEdit}
+            onSuccess={handleUpdatePayment}
+          />
+        )}
+      </Modal>
 
       {/* Delete Modal */}
       <Modal

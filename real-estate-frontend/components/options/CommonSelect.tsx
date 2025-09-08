@@ -27,6 +27,7 @@ export interface CommonSelectItem {
 interface CommonSelectProps {
   items: CommonSelectItem[]
   defaultValue?: string
+  value?: string
   onSelect: (selected: CommonSelectItem) => void
   placeholder?: string
   disabled?: boolean
@@ -35,15 +36,18 @@ interface CommonSelectProps {
 const CommonSelect = ({
   items,
   defaultValue,
+  value,
   onSelect,
   placeholder = "Select...",
   disabled = false,
 }: CommonSelectProps) => {
   const [open, setOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedValue, setSelectedValue] = useState(defaultValue || "")
+  const [internalValue, setInternalValue] = useState(defaultValue || "")
 
-  const selectedItem = items.find(item => item.value === selectedValue)
+  // Use controlled value if provided, otherwise use internal state
+  const selectedValue = value !== undefined ? value : internalValue
+  const selectedItem = items.find(item => item.value === selectedValue || item.id === selectedValue)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -79,7 +83,14 @@ const CommonSelect = ({
                     key={item.id}
                     value={item.value}
                     onSelect={() => {
-                      setSelectedValue(item.value)
+                      if (value !== undefined) {
+                        // Controlled: parent handles value
+                        onSelect(item)
+                      } else {
+                        // Uncontrolled: update internal state
+                        setInternalValue(item.value)
+                        onSelect(item)
+                      }
                       setOpen(false)
                       onSelect(item)
                     }}

@@ -32,28 +32,49 @@ const UpdatePaymentForm = ({
   const { contacts } = useContactContext()
   const { expenses } = useExpenseContext()
 
-  // Map property name to id
-  const propertyId = properties.find(p => p.name === payment.property)?.id || ""
-  // Map contact name to id
-  const contactId = contacts.find(c => c.businessName === payment.contact)?.id || ""
-
-  // Map expense name to id for each item
-  const [itemInputs, setItemInputs] = useState(
+  // State for form data and items
+  const [formData, setFormData] = useState({
+    propertyId: "",
+    contactId: "",
+    note: payment.note || "",
+    createdAt: payment.created ? new Date(payment.created) : undefined,
+    files: [] as File[],
+  })
+  const [itemInputs, setItemInputs] = useState<{ id: string; expense: string; amount: string; price: string }[]>(
     payment.items?.map(item => ({
       id: item.id,
-      expense: expenses.find(e => e.expense === item.expense)?.id || "",
+      expense: "",
       amount: item.amount.toString(),
       price: item.price.toString(),
     })) || [{ expense: "", amount: "", price: "" }]
   )
 
-  const [formData, setFormData] = useState({
-    propertyId,
-    contactId,
-    note: payment.note || "",
-    createdAt: payment.created ? new Date(payment.created) : undefined,
-    files: [] as File[],
-  })
+  // Effect to set correct IDs after context data loads
+  useEffect(() => {
+    // Map property (name or id) to id
+    let propertyId = properties.find(p => p.name === payment.property)?.id
+    if (!propertyId) propertyId = properties.find(p => p.id === payment.property)?.id || ""
+    // Map contact (name or id) to id
+    let contactId = contacts.find(c => c.businessName === payment.contact)?.id
+    if (!contactId) contactId = contacts.find(c => c.id === payment.contact)?.id || ""
+    // Map expense (name or id) to id for each item
+    const mappedItems = payment.items?.map(item => {
+      let expenseId = expenses.find(e => e.expense === item.expense)?.id
+      if (!expenseId) expenseId = expenses.find(e => e.id === item.expense)?.id || ""
+      return {
+        id: item.id,
+        expense: expenseId,
+        amount: item.amount.toString(),
+        price: item.price.toString(),
+      }
+    }) || [{ expense: "", amount: "", price: "" }]
+    setFormData(prev => ({
+      ...prev,
+      propertyId,
+      contactId,
+    }))
+    setItemInputs(mappedItems)
+  }, [properties, contacts, expenses, payment])
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
@@ -265,7 +286,7 @@ const UpdatePaymentForm = ({
           <label className="block text-sm font-medium text-foreground mb-2">Property *</label>
           <CommonSelect
             items={propertyOptions}
-            defaultValue={formData.propertyId}
+            value={formData.propertyId}
             onSelect={handlePropertySelect}
             placeholder="Select property"
             disabled={isSubmitting || isSuccess}
@@ -277,7 +298,7 @@ const UpdatePaymentForm = ({
           <label className="block text-sm font-medium text-foreground mb-2">Contact *</label>
           <CommonSelect
             items={contactOptions}
-            defaultValue={formData.contactId}
+            value={formData.contactId}
             onSelect={handleContactSelect}
             placeholder="Select contact"
             disabled={isSubmitting || isSuccess}
@@ -390,7 +411,7 @@ const UpdatePaymentForm = ({
                   <div>
                     <CommonSelect
                       items={expenseOptions}
-                      defaultValue={item.expense}
+                      value={item.expense}
                       onSelect={selected => handleExpenseSelect(idx, selected)}
                       placeholder="Select expense type"
                       disabled={isSubmitting || isSuccess}
