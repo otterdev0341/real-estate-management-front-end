@@ -32,21 +32,28 @@ const UpdatePaymentForm = ({
   const { contacts } = useContactContext()
   const { expenses } = useExpenseContext()
 
-  const [formData, setFormData] = useState({
-    propertyId: payment.property || "",
-    contactId: payment.contact || "",
-    note: payment.note || "",
-    createdAt: payment.created ? new Date(payment.created) : undefined,
-    files: [] as File[],
-  })
+  // Map property name to id
+  const propertyId = properties.find(p => p.name === payment.property)?.id || ""
+  // Map contact name to id
+  const contactId = contacts.find(c => c.businessName === payment.contact)?.id || ""
+
+  // Map expense name to id for each item
   const [itemInputs, setItemInputs] = useState(
     payment.items?.map(item => ({
       id: item.id,
-      expense: item.expense,
+      expense: expenses.find(e => e.expense === item.expense)?.id || "",
       amount: item.amount.toString(),
       price: item.price.toString(),
     })) || [{ expense: "", amount: "", price: "" }]
   )
+
+  const [formData, setFormData] = useState({
+    propertyId,
+    contactId,
+    note: payment.note || "",
+    createdAt: payment.created ? new Date(payment.created) : undefined,
+    files: [] as File[],
+  })
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
@@ -192,8 +199,9 @@ const UpdatePaymentForm = ({
         formData.contactId,
         formData.propertyId,
         items,
-        formData.files
+        
       )
+      console.log("Submitting DTO:", dto) // Debug log
       const result = await PaymentService.instance.updatePayment(dto)
       if (isLeft(result)) {
         setSubmitError(result.value.message || "Failed to update payment")

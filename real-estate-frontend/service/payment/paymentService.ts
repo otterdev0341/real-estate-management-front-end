@@ -81,6 +81,10 @@ export class PaymentService extends BaseService {
             const token = this.getUserToken().get();
             const targetId = reqUpdatePaymentDto.getId();
             const payload = reqUpdatePaymentDto.toFormData();
+            // console.log("Update Payment FormData entries:", payload);
+            // for (const pair of payload.entries()) {
+            //     console.log(`${pair[0]}: ${pair[1]}`);
+            // }
             const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/payment/${targetId}`, {
                 method: "PUT",
                 headers: {
@@ -101,6 +105,7 @@ export class PaymentService extends BaseService {
             }
 
             const responseData = await res.json();
+            console.log("Raw payment update response data:", responseData);
             return right(new ResEntryPaymentDto(
                 responseData.id,
                 responseData.transactionType,

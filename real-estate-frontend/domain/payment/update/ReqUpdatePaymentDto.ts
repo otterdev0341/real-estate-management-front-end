@@ -7,7 +7,7 @@ export default class ReqUpdatePaymentDto {
     private contact: string; // UUID
     private property: string; // UUID
     private items: RequpdatePaymentItemDto[];
-    private files: File[];
+    
 
     constructor(
         id: string,
@@ -16,7 +16,7 @@ export default class ReqUpdatePaymentDto {
         contact: string,
         property: string,
         items: RequpdatePaymentItemDto[],
-        files: File[] = []
+        
     ) {
         this.id = id;
         this.createdAt = createdAt;
@@ -24,7 +24,7 @@ export default class ReqUpdatePaymentDto {
         this.contact = contact;
         this.property = property;
         this.items = items;
-        this.files = files;
+        
     }
 
     // Getters
@@ -53,9 +53,6 @@ export default class ReqUpdatePaymentDto {
         return this.items;
     }
 
-    public getFiles(): File[] {
-        return this.files;
-    }
 
     // Setters
 
@@ -84,9 +81,7 @@ export default class ReqUpdatePaymentDto {
         this.items = items;
     }
 
-    public setFiles(files: File[]): void {
-        this.files = files;
-    }
+
 
     public toFormData(): FormData {
         const formData = new FormData();
@@ -100,12 +95,6 @@ export default class ReqUpdatePaymentDto {
         };
 
         formData.append("data", JSON.stringify(data));
-
-        if (this.files && this.files.length > 0) {
-            this.files.forEach(file => {
-                formData.append("files", file);
-            });
-        }
 
         return formData;
     }
