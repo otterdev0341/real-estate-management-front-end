@@ -46,10 +46,7 @@ const LoginForm = () => {
         return
       }
 
-      const { token, user } = result.value
-      document.cookie = `token=${token}; path=/;`
-      setUserData(user)
-      sessionStorage.setItem("userData", JSON.stringify(user))
+      
 
       setSuccess("Login successful! Redirecting to Dashboard...")
       setShowToast(true)
@@ -58,6 +55,7 @@ const LoginForm = () => {
         setLoading(true)
         setTimeout(() => {
           setLoading(false)
+          // redirect to dashboard
           redirect("/service/dashboard")
         }, 1200)
       }, 1500)

@@ -30,8 +30,12 @@ const navigationItems = [
   { name: "Report", icon: ChartBarIcon, href: "#" },
   { name: "Sale", icon: ShoppingCartIcon, href: "/service/sale" },
   { name: "Payment", icon: CreditCardIcon, href: "/service/payment" },
-  { name: "Investment", icon: ArrowTrendingUpIcon, href: "service/investment" },
+  { name: "Investment", icon: ArrowTrendingUpIcon, href: "/service/investment" },
 ]
+
+const fetchStore = async () => {
+  
+}
 
 export function VerticalNavbar() {
   const pathname = usePathname()

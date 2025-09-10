@@ -14,6 +14,9 @@ import { isLeft, isRight } from "@/implementation/Either"
 import FileUpload from "@/domain/uploadFile/FileUpload"
 import BaseAttachFileToTarget from "@/domain/utility/BaseAttachFileToTarget"
 import BaseRemoveFileFromTarget from "@/domain/utility/BaseRemoveFileFromTarget"
+import ViewPropertyPaymentTable from "@/components/form/property/property/payment/ViewPropertyPaymentTable"
+import ViewPropertyPaymentTemplate from "@/components/form/property/property/payment/ViewPropertyPaymentTemplate"
+import ViewPropertyInvestmentTemplate from "@/components/form/property/property/investment/ViewPropertyInvestmentTemplate"
 
 const TABS = [
   { key: "detail", label: "View Details" },
@@ -21,6 +24,8 @@ const TABS = [
   { key: "forcast", label: "Forecast" },
   { key: "propertyType", label: "Property Type" },
   { key: "memo", label: "Memos" },
+  { key:"payment" , label: "Payments" },
+  { key: "investment", label: "Investments" },
 ]
 
 const fetchFiles = async (dto: BaseFetchFileRelatedDto) => {
@@ -120,6 +125,12 @@ export default function PropertyDetailPage() {
           )}
           {activeTab === "memo" && (
             <ViewPropertyMemo propertyId={propertyId} />
+          )}
+          {activeTab === "payment" && (
+            <ViewPropertyPaymentTemplate propertyId={propertyId} />
+          )}
+          {activeTab === "investment" && (
+            <ViewPropertyInvestmentTemplate propertyId={propertyId} />
           )}
         </div>
       </div>

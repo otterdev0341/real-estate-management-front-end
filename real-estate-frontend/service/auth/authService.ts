@@ -9,6 +9,8 @@ import { useContactContext } from "@/context/store/ContactStore"
 import { useMemoContext } from "@/context/store/MemoStore"
 import { useExpenseContext } from "@/context/store/ExpenseStore"
 import { useSaleContext } from "@/context/store/SaleStore"
+import { useInvestmentContext } from "@/context/store/InvestmentStore"
+import { usePaymentContext } from "@/context/store/PaymentStore"
 
 export class AuthService extends BaseService {
   private static _authInstance: AuthService
@@ -47,7 +49,7 @@ export class AuthService extends BaseService {
     }
   }
 
-  async login(data: ReqLoginDto): Promise<Either<ServiceError, { token: string; user: UserData }>> {
+  async login(data: ReqLoginDto): Promise<Either<ServiceError, string>> {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/auth/login`, {
         method: "POST",
@@ -67,42 +69,22 @@ export class AuthService extends BaseService {
       if (!token) {
         return left(FetchFailed.create("AuthService", "No token received", new Error("No token")))
       }
+      console.log("Token received in AuthService:", token);
 
-      // Fetch user data after login
-      const userRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/auth/resme`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      })
+      // save token to cokkie
+      document.cookie = `auth_token=${token}; path=/; max-age=86400`; // 1 day expiration
 
-      if (!userRes.ok) {
-        return left(FetchFailed.create("AuthService", "Failed to fetch user data after login", new Error("User fetch failed")))
-      }
+      
+      
 
-      const userDataResponse = await userRes.json()
-      console.log("User Data Response in AuthService:", userDataResponse)
-      const user = userDataResponse.data as UserData
-      await this.prepareStore();
-      return right({ token, user })
+      
+
+      return right(token)
     } catch (error) {
+      console.error("Error during login:", error);
       return left(FetchFailed.create("AuthService", "An unexpected error occurred during login.", error))
     }
     }
 
-    private async prepareStore() {
-      const {refreshProperties} = usePropertyContext();
-      const {refreshContacts} = useContactContext();
-      const {refreshMemos} = useMemoContext();
-      const {refreshExpenses} = useExpenseContext();
-      const {refreshSales} = useSaleContext();
-      
-      await refreshProperties();
-      await refreshContacts();
-      await refreshMemos();
-      await refreshExpenses();
-      await refreshSales();
-    }
-
+    
 }

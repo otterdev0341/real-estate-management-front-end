@@ -349,4 +349,61 @@ export class PaymentService extends BaseService {
             return left(FetchFailed.create("PaymentService", "An unexpected error occurred during removing file from payment.", error));
         }
     }
+
+
+    async fetchAllPaymentByPropertyId(propertyId: string): Promise<Either<ServiceError, ResEntryPaymentDto[]>> {
+        try {
+            if (!this.isTokenExist()) {
+                return left(Unauthorized.create("PaymentService", "No authentication token found."));
+            }
+            const token = this.getUserToken().get();
+
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/payment/property/${propertyId}`, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                },
+            });
+
+            if (!res.ok) {
+                if (res.status === 401) {
+                    return left(Unauthorized.create("PaymentService", `Authorization failed to fetch payments by property ID: ${res.statusText}`, new Error(res.statusText)));
+                }
+                return left(FetchFailed.create("PaymentService", `Failed to fetch payments by property ID: ${res.statusText}`, new Error(res.statusText)));
+            }
+
+            const responseData = await res.json();
+            console.log("Raw payment fetch by property ID response data:", responseData);
+
+            // Correct mapping: responseData.data is an array of payments
+            const payments: ResEntryPaymentDto[] = Array.isArray(responseData.data)
+                ? responseData.data.map((payment: any) =>
+                    new ResEntryPaymentDto(
+                        payment.id,
+                        payment.transaction,
+                        payment.property,
+                        payment.note ?? "",
+                        payment.contact,
+                        (payment.items ?? []).map((item: any) =>
+                            new ResEntryPaymentItemDto(
+                                item.id,
+                                item.paymentTransaction,
+                                item.expense,
+                                item.amount,
+                                item.price
+                            )
+                        ),
+                        payment.createdAt,
+                        payment.updatedAt
+                    )
+                )
+                : [];
+
+            console.log("Fetched payments by property ID:", payments);
+            return right(payments);
+        } catch (error) {
+            return left(FetchFailed.create("PaymentService", "An unexpected error occurred during fetching payments by property ID.", error));
+        }
+    }
+
 }

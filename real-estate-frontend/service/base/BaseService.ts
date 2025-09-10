@@ -10,7 +10,7 @@ export abstract class BaseService {
   // Get JWT token from cookie
   protected getUserToken(): Optional<string>{
     if (typeof document === "undefined") return Optional.empty()
-    const match = document.cookie.match(/(?:^|; )token=([^;]*)/)
+    const match = document.cookie.match(/(?:^|; )auth_token=([^;]*)/)
     return match ? Optional.of(decodeURIComponent(match[1])) : Optional.empty()
   }
 

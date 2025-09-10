@@ -4,7 +4,7 @@ const PUBLIC_PATHS = ["/auth/login", "/register"]
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
-  const token = req.cookies.get("token")?.value
+  const token = req.cookies.get("auth_token")?.value
 
   // If token exists, prevent access to /auth/login
   if (
@@ -22,7 +22,7 @@ export function middleware(req: NextRequest) {
 
   // Only check if token exists and is not empty for protected routes
   if (!token || token.trim() === "") {
-    return NextResponse.redirect(new URL("/login", req.url))
+    return NextResponse.redirect(new URL("/auth/login", req.url))
   }
 
   return NextResponse.next()
