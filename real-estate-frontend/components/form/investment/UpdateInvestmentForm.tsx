@@ -357,7 +357,7 @@ const UpdateInvestmentForm = ({
         </div>
         {/* Investment Items */}
         <div>
-          <label className="block text-base font-semibold text-foreground mb-2 flex items-center gap-2">
+          <label className="text-base font-semibold text-foreground mb-2 flex items-center gap-2">
             <span className="inline-block bg-violet-300 text-violet-900 rounded px-2 py-1 text-xs font-bold">Investment Items</span>
             <span className="text-destructive">*</span>
           </label>

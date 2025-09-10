@@ -18,7 +18,8 @@ import {
   ArrowTrendingUpIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline"
-import { UserDropdown } from "./UserDropDown"
+import UserDisplayCard from "./UserDisplayCard"
+
 
 const navigationItems = [
   { name: "", icon: HomeIcon, href: "/service/dashboard", active: true }, // Dashboard with no text
@@ -33,9 +34,7 @@ const navigationItems = [
   { name: "Investment", icon: ArrowTrendingUpIcon, href: "/service/investment" },
 ]
 
-const fetchStore = async () => {
-  
-}
+
 
 export function VerticalNavbar() {
   const pathname = usePathname()
@@ -244,7 +243,7 @@ export function VerticalNavbar() {
       </div>
 
       {/* UserDropdown component */}
-      <UserDropdown
+      <UserDisplayCard
         isOpen={isUserDropdownOpen}
         onClose={() => setIsUserDropdownOpen(false)}
         position={dropdownPosition}

@@ -72,7 +72,7 @@ export class ContactService extends BaseService {
       }
 
       const json = await res.json();
-      console.log("Fetch All Contacts Response:", json);
+      // console.log("Fetch All Contacts Response:", json);
       const items: ContactDto[] = json.data?.items ?? [];
       return right(items);
     } catch (error) {

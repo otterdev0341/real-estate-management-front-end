@@ -86,5 +86,44 @@ export class AuthService extends BaseService {
     }
     }
 
-    
+  async logout(): Promise<Either<ServiceError, null>> {
+    try {
+      // Clear the auth token cookie
+      document.cookie = "auth_token=; path=/; max-age=0"
+
+      return right(null)
+    } catch (error) {
+      return left(FetchFailed.create("AuthService", "An unexpected error occurred during logout.", error))
+    }
+  }
+
+
+  async fetchCurrentUser(): Promise<Either<ServiceError, UserData>> {
+    try {
+      const token = document.cookie.split("; ").find(row => row.startsWith("auth_token="))?.split("=")[1]
+      if (!token) {
+        return left(Unauthorized.create("AuthService", "No auth token found", new Error("No auth token")))
+      }
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/auth/resme`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!res.ok) {
+        const errorJson = await res.json()
+        return left(FetchFailed.create("AuthService", errorJson.message || "Fetch current user failed", new Error(errorJson.message)))
+      }
+
+      const responseData = await res.json()
+      console.log("Current user data fetched:", responseData.data);
+      return right(responseData.data as UserData)
+    } catch (error) {
+      return left(FetchFailed.create("AuthService", "An unexpected error occurred while fetching current user.", error))
+    }
+
+  }
 }

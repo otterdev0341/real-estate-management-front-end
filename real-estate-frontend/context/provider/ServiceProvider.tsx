@@ -11,10 +11,12 @@ import { PropertyStatusProvider } from "../store/PropertyStatusStore";
 import { PropertyProvider } from "../store/PropertyStore";
 import { PropertyTypeProvider } from "../store/PropertyTypeStore";
 import { SaleProvider } from "../store/SaleStore";
+import { UserProvider } from "../store/UserStore";
 
 
 export default function ServiceLayout({ children }: { children: React.ReactNode }) {
   return (
+    <UserProvider>
     <MemoTypeProvider>
       <ExpenseTypeProvider>
         <ExpenseProvider>
@@ -40,5 +42,6 @@ export default function ServiceLayout({ children }: { children: React.ReactNode 
         </ExpenseProvider>
       </ExpenseTypeProvider>
     </MemoTypeProvider>
+    </UserProvider>
   )
 }
