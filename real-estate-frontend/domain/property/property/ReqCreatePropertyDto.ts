@@ -6,7 +6,7 @@ export default interface ReqCreatePropertyDto {
   area: string;
   price: number;
   fsp: number;
-  maximumBudget: number;
+  budget: number;
   propertyStatus: string; // property status Id
   ownerBy: string; // contact Id
   mapUrl: string;

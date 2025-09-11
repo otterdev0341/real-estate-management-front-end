@@ -9,7 +9,7 @@ export default interface ResEntryPropertyDto {
   area: string;
   price: string;
   fsp: string;
-  maximumBudget: string;
+  budget: string;
   currentExpense?: number;
   budgetUsedPercent?: number;
   propertyType?: string[];

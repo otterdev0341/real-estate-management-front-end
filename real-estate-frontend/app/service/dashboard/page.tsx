@@ -1,6 +1,10 @@
+import MapDisplay from "@/components/dashboard/MapDisplay"
+
 const page = () => {
   return (
-    <div>this is dashboard</div>
+    <div>
+      <MapDisplay />
+    </div>
   )
 }
 export default page

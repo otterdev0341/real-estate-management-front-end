@@ -1,4 +1,4 @@
-import ChangeUserInfoForm from "@/components/form/ChangeUserInfoForm"
+import ChangeUserInfoForm from "@/components/form/user/ChangeUserInfoForm"
 import { RealEstateDescription } from "@/components/real-estate/RealEstateDescription"
 
 const page = () => {

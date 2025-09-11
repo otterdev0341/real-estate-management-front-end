@@ -16,26 +16,31 @@ import CommonDeleteForm from "@/components/form/delete/CommonDeleteForm"
 import { useContactContext } from "@/context/store/ContactStore"
 import formatDate from "@/utility/utility"
 import { ContactService } from "@/service/contact/ContactService"
-import { ContactDto } from "@/domain/contact/contact/ResEntryContactDto"
+
 import { isLeft } from "@/implementation/Either"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useRouter } from "next/navigation"
+import ResEntryContactDto from "@/domain/contact/contact/ResEntryContactDto"
+import ReqCreateContactDto from "@/domain/contact/contact/ReqCreateContactDto"
+import { ReqUpdateContactDto } from "@/domain/contact/contact/ReqUpdateContactDto"
 
 const ContactTable = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(20)
-  const [sortColumn, setSortColumn] = useState<keyof ContactDto>("businessName")
+  const [sortColumn, setSortColumn] = useState<keyof ResEntryContactDto>("businessName")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [updateId, setUpdateId] = useState<string | null>(null)
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
-  const [updateContactData, setUpdateContactData] = useState<Partial<ContactDto>>({})
+  const [updateContactData, setUpdateContactData] = useState<ResEntryContactDto | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState("")
 
   const { contacts, refreshContacts, loading: contactsLoading } = useContactContext()
+  const router = useRouter()
 
   const filteredContacts = contacts.filter((contact) => {
     const matchesSearch =
@@ -63,7 +68,7 @@ const ContactTable = () => {
   const startIndex = (currentPage - 1) * rowsPerPage
   const paginatedContacts = sortedContacts.slice(startIndex, startIndex + rowsPerPage)
 
-  const handleSort = (column: keyof ContactDto) => {
+  const handleSort = (column: keyof ResEntryContactDto) => {
     if (column === sortColumn) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc")
     } else {
@@ -72,22 +77,35 @@ const ContactTable = () => {
     }
   }
 
-  const handleCreateContact = async (contactData: Partial<ContactDto>) => {
+  const handleCreateContact = async (contactData: ReqCreateContactDto) => {
     await ContactService.instance.createNewContact(contactData)
     await refreshContacts()
     setIsCreateModalOpen(false)
   }
 
-  const handleUpdateClick = (contact: ContactDto) => {
-    setUpdateId(contact.id)
-    setUpdateContactData(contact)
+  const handleUpdateClick = (contact: ReqUpdateContactDto | ResEntryContactDto) => {
+    setUpdateId(contact.id ?? "")
+    // Ensure all required fields are present and not undefined
+    setUpdateContactData({
+      ...contact,
+      internalName: contact.internalName ?? "",
+      businessName: contact.businessName ?? "",
+      contactType: contact.contactType ?? "",
+      mobilePhone: contact.mobilePhone ?? "",
+      email: contact.email ?? "",
+      detail: contact.detail ?? "",
+      note: contact.note ?? "",
+      address: contact.address ?? "",
+      phone: contact.phone ?? "",
+      line: contact.line ?? "",
+    })
     setIsUpdateModalOpen(true)
   }
 
   const handleCancelUpdate = () => {
     setIsUpdateModalOpen(false)
     setUpdateId(null)
-    setUpdateContactData({})
+    setUpdateContactData(null)
   }
 
   const handleDeleteClick = (id: string) => {
@@ -163,7 +181,7 @@ const ContactTable = () => {
                 ].map((column) => (
                   <th
                     key={column.key}
-                    onClick={() => handleSort(column.key as keyof ContactDto)}
+                    onClick={() => handleSort(column.key as keyof ResEntryContactDto)}
                     className="px-6 py-4 text-left text-sm font-semibold text-foreground cursor-pointer hover:text-accent transition-colors select-none"
                   >
                     <div className="flex items-center gap-1">
@@ -194,9 +212,10 @@ const ContactTable = () => {
                 paginatedContacts.map((contact, index) => (
                   <tr
                     key={contact.id}
-                    className={`border-b border-border hover:bg-muted/30 transition-colors ${
+                    className={`border-b border-border hover:bg-muted/30 transition-colors cursor-pointer ${
                       index % 2 === 0 ? "bg-background/50" : "bg-muted/20"
                     }`}
+                    onClick={() => router.push(`/service/contact/${contact.id}`)}
                   >
                     <td className="px-6 py-4 text-sm font-medium text-foreground">{contact.businessName}</td>
                     <td className="px-6 py-4 text-sm text-foreground">{contact.internalName}</td>
@@ -207,13 +226,19 @@ const ContactTable = () => {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           className="p-1 text-muted-foreground hover:text-accent transition-colors"
-                          onClick={() => handleUpdateClick(contact)}
+                          onClick={e => {
+                            e.stopPropagation()
+                            handleUpdateClick(contact)
+                          }}
                         >
                           <PencilIcon className="w-4 h-4" />
                         </button>
                         <button
                           className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                          onClick={() => handleDeleteClick(contact.id)}
+                          onClick={e => {
+                            e.stopPropagation()
+                            handleDeleteClick(contact.id)
+                          }}
                         >
                           <TrashIcon className="w-4 h-4" />
                         </button>
@@ -299,7 +324,8 @@ const ContactTable = () => {
           paginatedContacts.map((contact) => (
             <div
               key={contact.id}
-              className="bg-card/60 backdrop-blur-xl border border-border rounded-xl p-4 shadow-lg hover:bg-card/80 transition-all duration-200"
+              className="bg-card/60 backdrop-blur-xl border border-border rounded-xl p-4 shadow-lg hover:bg-card/80 transition-all duration-200 cursor-pointer"
+              onClick={() => router.push(`/service/contact/${contact.id}`)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 space-y-2">
@@ -314,10 +340,20 @@ const ContactTable = () => {
                   <p className="text-muted-foreground text-sm">Email: {contact.email}</p>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
-                  <button className="p-2 text-muted-foreground hover:text-accent hover:bg-accent/10 rounded-lg transition-colors">
+                  <button className="p-2 text-muted-foreground hover:text-accent hover:bg-accent/10 rounded-lg transition-colors"
+                    onClick={e => {
+                      e.stopPropagation()
+                      handleUpdateClick(contact)
+                    }}
+                  >
                     <PencilIcon className="w-5 h-5" />
                   </button>
-                  <button className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
+                  <button className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                    onClick={e => {
+                      e.stopPropagation()
+                      handleDeleteClick(contact.id)
+                    }}
+                  >
                     <TrashIcon className="w-5 h-5" />
                   </button>
                 </div>
@@ -354,7 +390,7 @@ const ContactTable = () => {
         title="Update Contact"
         maxWidth="sm"
       >
-        {updateId && (
+        {updateId && updateContactData && (
           <UpdateContactForm
             id={updateContactData.id ?? ""}
             businessName={updateContactData.businessName ?? ""}
@@ -371,7 +407,7 @@ const ContactTable = () => {
             onSuccess={async () => {
               setIsUpdateModalOpen(false)
               setUpdateId(null)
-              setUpdateContactData({})
+              setUpdateContactData(null)
               await refreshContacts()
             }}
           />

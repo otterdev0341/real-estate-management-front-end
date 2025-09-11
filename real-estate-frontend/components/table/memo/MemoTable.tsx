@@ -257,7 +257,7 @@ const MemoTable = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(memo.createdAt)}</td>
+                      <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(memo.memoDate)}</td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
@@ -382,7 +382,7 @@ const MemoTable = () => {
                     )}
                     {/* Updated At (smaller font) */}
                     <p className="text-muted-foreground text-xs mt-1">
-                      Created: {formatDate(memo.createdAt)}
+                      Created: {formatDate(memo.memoDate)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 ml-4">
@@ -447,7 +447,7 @@ const MemoTable = () => {
             name={editMemoData.name ?? ""}
             detail={editMemoData.detail ?? ""}
             memoType={editMemoData.memoType ?? ""}
-            createdAt={editMemoData.createdAt ?? ""}
+            memoDate={editMemoData.memoDate ?? ""}
             updatedAt={editMemoData.updatedAt ?? ""}
             onCancel={handleCancelEdit}
             onSuccess={handleUpdateMemo}

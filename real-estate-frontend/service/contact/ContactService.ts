@@ -1,9 +1,11 @@
-import { ContactDto } from "@/domain/contact/contact/ResEntryContactDto"
+
 import Either, { left, right } from "@/implementation/Either"
 import { BaseService } from "../base/BaseService"
 import { CreateFailed, FetchFailed, ServiceError, Unauthorized, UpdateFailed } from "@/implementation/ServiceError"
 import { BaseQuery } from "@/domain/utility/BaseQueryDto"
 import { ReqUpdateContactDto } from "@/domain/contact/contact/ReqUpdateContactDto"
+import ResEntryContactDto from "@/domain/contact/contact/ResEntryContactDto"
+import ReqCreateContactDto from "@/domain/contact/contact/ReqCreateContactDto"
 
 export class ContactService extends BaseService {
   private static _contactInstance: ContactService
@@ -19,7 +21,7 @@ export class ContactService extends BaseService {
     return ContactService._contactInstance
   }
 
-  async createNewContact(data: Partial<ContactDto>): Promise<Either<ServiceError, ContactDto>> {
+  async createNewContact(data: ReqCreateContactDto): Promise<Either<ServiceError, ResEntryContactDto>> {
     try {
       if (!this.isTokenExist()) {
         return left(Unauthorized.create("ContactService", "No authentication token found."));
@@ -41,14 +43,14 @@ export class ContactService extends BaseService {
         return left(CreateFailed.create("ContactService", `Failed to create contact: ${res.statusText}`, new Error(res.statusText)));
       }
 
-      const responseData: ContactDto = await res.json();
+      const responseData: ResEntryContactDto = await res.json();
       return right(responseData);
     } catch (error) {
       return left(CreateFailed.create("ContactService", "An unexpected error occurred during contact creation.", error));
     }
   }
 
-  async fetchAllContacts(query: BaseQuery): Promise<Either<ServiceError, ContactDto[]>> {
+  async fetchAllContacts(query: BaseQuery): Promise<Either<ServiceError, ResEntryContactDto[]>> {
     try {
       if (!this.isTokenExist()) {
         return left(Unauthorized.create("ContactService", "No authentication token found."));
@@ -73,7 +75,7 @@ export class ContactService extends BaseService {
 
       const json = await res.json();
       // console.log("Fetch All Contacts Response:", json);
-      const items: ContactDto[] = json.data?.items ?? [];
+      const items: ResEntryContactDto[] = json.data?.items ?? [];
       return right(items);
     } catch (error) {
       return left(FetchFailed.create("ContactService", "An unexpected error occurred during fetching contacts.", error));
@@ -107,13 +109,14 @@ export class ContactService extends BaseService {
     }
   }
 
-  async updateContact(reqUpdateContactDto: ReqUpdateContactDto): Promise<Either<ServiceError, ContactDto>> {
+  async updateContact(reqUpdateContactDto: ReqUpdateContactDto): Promise<Either<ServiceError, ResEntryContactDto>> {
     try {
       if (!this.isTokenExist()) {
         return left(Unauthorized.create("ContactService", "No authentication token found."));
       }
       const token = this.getUserToken().get();
       const { id, ...dataWithoutId } = reqUpdateContactDto;
+      // console.log("Update Contact Type id is:", dataWithoutId.contactType);
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/contact/${id}`, {
         method: "PUT",
         headers: {
@@ -129,19 +132,21 @@ export class ContactService extends BaseService {
         }
         if (res.status === 400) {
           const errorJson = await res.json();
+          // console.log("Update Contact Error Response:", errorJson);
           return left(UpdateFailed.create("ContactService", errorJson.message || "Failed to update contact", new Error(errorJson.message)));
         }
         return left(FetchFailed.create("ContactService", `Failed to update contact: ${res.statusText}`, new Error(res.statusText)));
       }
 
-      const responseData: ContactDto = await res.json();
+      const responseData: ResEntryContactDto = await res.json();
+      // console.log("Update Contact Response:", responseData);
       return right(responseData);
     } catch (error) {
       return left(FetchFailed.create("ContactService", "An unexpected error occurred during updating contact.", error));
     }
   }
 
-  async fetchContactById(id: string): Promise<Either<ServiceError, ContactDto>> {
+  async fetchContactById(id: string): Promise<Either<ServiceError, ResEntryContactDto>> {
     try {
       if (!this.isTokenExist()) {
         return left(Unauthorized.create("ContactService", "No authentication token found."));
@@ -162,8 +167,10 @@ export class ContactService extends BaseService {
         return left(FetchFailed.create("ContactService", `Failed to fetch contact: ${res.statusText}`, new Error(res.statusText)));
       }
 
-      const responseData: ContactDto = await res.json();
-      return right(responseData);
+       const json = await res.json();
+       const responseData: ResEntryContactDto = json.data; // <-- Correct mapping here
+      //  console.log("Fetch Contact By ID Response:", responseData);
+       return right(responseData);
     } catch (error) {
       return left(FetchFailed.create("ContactService", "An unexpected error occurred during fetching contact.", error));
     }

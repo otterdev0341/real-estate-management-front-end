@@ -173,7 +173,7 @@ const ViewMemoForm = ({ memoId }: ViewMemoFormProps) => {
           <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <span className="font-medium">Created:</span>
-              <span>{formatDate(memo.createdAt)}</span>
+              <span>{formatDate(memo.memoDate)}</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <span className="font-medium">Updated:</span>
@@ -196,7 +196,7 @@ const ViewMemoForm = ({ memoId }: ViewMemoFormProps) => {
             name={memo.name}
             detail={memo.detail}
             memoType={memo.memoType}
-            createdAt={memo.createdAt}
+            memoDate={memo.memoDate}
             updatedAt={memo.updatedAt}
             onCancel={handleCancelEdit}
             onSuccess={handleUpdateMemo}

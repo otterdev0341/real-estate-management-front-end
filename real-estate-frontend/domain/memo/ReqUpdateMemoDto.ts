@@ -1,5 +1,5 @@
 export default interface ReqUpdateMemoDto {
-  createdAt: string; // ISO date string
+  memoDate: String; // ISO date string
   id: string;
   name: string;
   detail?: string;

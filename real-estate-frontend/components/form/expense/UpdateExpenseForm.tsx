@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ExpenseService } from "@/service/expense/ExpenseService"
 import { isLeft } from "@/implementation/Either"
 import ReqUpdateExpenseDto from "@/domain/expense/ReqUpdateExpenseDto"
@@ -11,14 +11,35 @@ import CommonSelect, { CommonSelectItem } from "@/components/options/CommonSelec
 interface UpdateExpenseFormProps {
   id: string
   detail: string
-  expenseTypeId: string
+  expenseTypeId: string // This may be a string detail, not an id
   onCancel: () => void
   onSuccess: () => void
 }
 
 const UpdateExpenseForm = ({ id, detail, expenseTypeId, onCancel, onSuccess }: UpdateExpenseFormProps) => {
   const { expenseTypes } = useExpenseTypeContext()
-  const [formData, setFormData] = useState({ id, detail, expenseTypeId })
+
+  // Find correct expenseType id from detail string if needed
+  const getExpenseTypeId = (typeValue: string) => {
+    const found = expenseTypes.find(type => type.id === typeValue || type.detail === typeValue)
+    return found ? found.id : typeValue
+  }
+
+  // Set default formData with correct expenseType id
+  const [formData, setFormData] = useState({
+    id,
+    detail,
+    expenseTypeId: getExpenseTypeId(expenseTypeId),
+  })
+
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      expenseTypeId: getExpenseTypeId(expenseTypeId),
+    }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expenseTypes, expenseTypeId])
+
   const [validationErrors, setValidationErrors] = useState({ detail: "" })
   const [errorLabel, setErrorLabel] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -122,20 +143,6 @@ const UpdateExpenseForm = ({ id, detail, expenseTypeId, onCancel, onSuccess }: U
             disabled
           />
         </div>
-        {/* Expense Type (read-only, show name) */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Expense Type *</label>
-          <CommonSelect
-            items={expenseTypeOptions}
-            defaultValue={formData.expenseTypeId}
-            onSelect={item => {
-              setFormData({ ...formData, expenseTypeId: item.value })
-              setValidationErrors({ ...validationErrors, detail: "" })
-            }}
-            placeholder="Select or search expense type"
-            disabled={isSubmitting || isSuccess}
-          />
-        </div>
         {/* Expense Detail */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">Expense Detail *</label>
@@ -161,6 +168,20 @@ const UpdateExpenseForm = ({ id, detail, expenseTypeId, onCancel, onSuccess }: U
               {validationErrors.detail}
             </p>
           )}
+        </div>
+        {/* Expense Type */}
+        <div>
+          <label className="block text-sm font-medium text-foreground mb-2">Expense Type *</label>
+          <CommonSelect
+            items={expenseTypeOptions}
+            defaultValue={formData.expenseTypeId}
+            onSelect={item => {
+              setFormData({ ...formData, expenseTypeId: item.id })
+              setValidationErrors({ ...validationErrors, detail: "" })
+            }}
+            placeholder="Select or search expense type"
+            disabled={isSubmitting || isSuccess}
+          />
         </div>
         {errorLabel && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-3">

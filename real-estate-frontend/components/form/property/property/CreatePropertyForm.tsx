@@ -34,7 +34,7 @@ const initialState = {
   mapUrl: "",
   lat: "",
   lng: "",
-  files: [] as FileUpload[],
+  files: [] as File[], // <-- Correct type for blob upload
 }
 
 const CreatePropertyForm = ({ onSubmit, onCancel }: CreatePropertyFormProps) => {
@@ -87,12 +87,7 @@ const CreatePropertyForm = ({ onSubmit, onCancel }: CreatePropertyFormProps) => 
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const filesArr: FileUpload[] = Array.from(e.target.files).map((file) => ({
-        name: file.name,
-        size: file.size,
-        type: file.type,
-      }))
-      setFormData({ ...formData, files: filesArr })
+      setFormData({ ...formData, files: Array.from(e.target.files) }) // <-- Store as File[]
     }
   }
 

@@ -5,7 +5,7 @@ export default interface ResEntryMemoDto {
     name: string;
     detail: string;
     memoType: string; // need id by fetching from memoTypeStore
-    createdAt: string;
+    memoDate: string;
     updatedAt: string;
     files: FileUpload[];
 } 

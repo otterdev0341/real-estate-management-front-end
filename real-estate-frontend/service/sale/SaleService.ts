@@ -34,9 +34,9 @@ export class SaleService extends BaseService {
 
       const formData = reqCreateSaleDto.toFormData();
       
-      for (let pair of formData.entries()) {
-        console.log(`${pair[0]}: ${pair[1]}`);
-      }
+      // for (let pair of formData.entries()) {
+      //   console.log(`${pair[0]}: ${pair[1]}`);
+      // }
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/sale`, {
         method: "POST",
@@ -53,7 +53,7 @@ export class SaleService extends BaseService {
         }
         if (res.status === 400) {
           const errorJson = await res.json();
-          console.log(errorJson);
+          // console.log(errorJson);
           return left(CreateFailed.create("SaleService", errorJson.message || "Failed to create sale", new Error(errorJson.message)));
         }
         return left(FetchFailed.create("SaleService", `Failed to create sale: ${res.statusText}`, new Error(res.statusText)));
@@ -106,7 +106,7 @@ export class SaleService extends BaseService {
       }
 
       const responseData = await res.json();
-      console.log("Response Data in update sale service:", responseData);
+      // console.log("Response Data in update sale service:", responseData);
       return right(new ResEntrySaleDto(
         responseData.id,
         responseData.transactionType,
@@ -148,7 +148,7 @@ export class SaleService extends BaseService {
       const responseData = await res.json();
       
       const items: ResEntrySaleDto[] = responseData?.data?.items ?? [];
-      console.log(`Response Data in fetchAllSales: `, items);
+      // console.log(`Response Data in fetchAllSales: `, items);
       const sales = Array.isArray(items)
         ? items.map((sale: any) =>
             new ResEntrySaleDto(
@@ -220,7 +220,7 @@ export class SaleService extends BaseService {
 
       const responseData = await res.json();
       const data = responseData.data;
-      console.log("Response Data in fetchBySaleId:", data);
+      // console.log("Response Data in fetchBySaleId:", data);
 
       const sale = new ResEntrySaleDto(
         data.id,
@@ -266,7 +266,7 @@ export class SaleService extends BaseService {
       }
 
       const json = await res.json();
-      console.log("Response Data in fetchSaleFileRelated:", json);
+      // console.log("Response Data in fetchSaleFileRelated:", json);
       const items: FileUpload[] = json.data ?? [];
       return right(items);
     } catch (error) {

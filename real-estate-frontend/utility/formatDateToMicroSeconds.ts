@@ -1,18 +1,20 @@
-const formatDateToMicroseconds = (date: Date): string => {
-  const pad = (num: number, size = 2) => String(num).padStart(size, '0');
+export default function formatDateToMicroseconds(date: Date): string {
 
-  const year = date.getFullYear();
-  const month = pad(date.getMonth() + 1);
-  const day = pad(date.getDate());
-  const hours = pad(date.getHours());
-  const minutes = pad(date.getMinutes());
-  const seconds = pad(date.getSeconds());
-  const milliseconds = String(date.getMilliseconds()).padStart(3, '0');
+    const pad = (num: number, size = 2): string => {
+      return String(num).padStart(size, '0');
+    }
 
-  // เติมศูนย์ให้ครบ 6 หลัก (จาก ms 3 หลัก → microseconds 6 หลัก)
-  const microseconds = milliseconds + '000';
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+    const seconds = pad(date.getSeconds());
+    const milliseconds = String(date.getMilliseconds()).padStart(3, '0');
 
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${microseconds}`;
-}
+    // Append '000' to the milliseconds to get microseconds precision.
+    const microseconds = milliseconds + '000';
 
-export default formatDateToMicroseconds;
+    // Use 'T' between date and time for ISO-8601
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${microseconds}`;
+  }

@@ -1,4 +1,4 @@
-import ChangeEmail from "@/components/form/ChangeEmailForm"
+import ChangeEmail from "@/components/form/user/ChangeEmailForm"
 import { RealEstateDescription } from "@/components/real-estate/RealEstateDescription"
 
 const page = () => {
@@ -9,10 +9,7 @@ const page = () => {
             <div className="w-full max-w-md px-4 order-1 md:order-2">
               <ChangeEmail />
             </div>
-            {/* Description: second on mobile, first on desktop */}
-            <div className="w-full max-w-4xl px-4 order-2 md:order-1">
-              <RealEstateDescription />
-            </div>
+           
           </div>
         </div>
   )

@@ -7,7 +7,7 @@ export default interface ReqUpdatePropertyDto {
   area: string;
   price: number;
   fsp: number;
-  maximumBudget: number;
+  budget: number;
   propertyStatus: string;
   ownerBy: string; 
   mapUrl: string;

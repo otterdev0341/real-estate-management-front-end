@@ -1,4 +1,4 @@
-export interface ContactDto {
+export default interface ContactDto {
   id: string;
   businessName: string;
   internalName: string;

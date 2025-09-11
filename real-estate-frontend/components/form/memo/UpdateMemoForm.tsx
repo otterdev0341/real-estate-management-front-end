@@ -20,7 +20,7 @@ interface UpdateMemoFormProps {
   name: string
   detail?: string
   memoType?: string
-  createdAt?: string
+  memoDate?: string
   updatedAt?: string
   onCancel: () => void
   onSuccess: () => void
@@ -31,20 +31,38 @@ const UpdateMemoForm = ({
   name,
   detail = "",
   memoType = "",
-  createdAt = "",
+  memoDate = "",
   updatedAt = "",
   onCancel,
   onSuccess,
 }: UpdateMemoFormProps) => {
   const { memoTypes } = useMemoTypeContext()
-  const {refreshMemos} = useMemoContext();
+  const { refreshMemos } = useMemoContext()
+
+  // Helper to get correct memoType id from value (string or id)
+  const getMemoTypeId = (typeValue: string) => {
+    const found = memoTypes.find(type => type.detail === typeValue || type.id === typeValue)
+    return found ? found.id : typeValue
+  }
+
+  // Initialize formData with correct memoType id
   const [formData, setFormData] = useState<ReqUpdateMemoDto>({
     id,
     name,
     detail,
-    memoType,
-    createdAt,
+    memoType: getMemoTypeId(memoType),
+    memoDate,
   })
+
+  // Update formData when memoTypes or memoType prop changes
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      memoType: getMemoTypeId(memoType),
+    }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [memoTypes, memoType])
+
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({})
   const [errorLabel, setErrorLabel] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -53,7 +71,7 @@ const UpdateMemoForm = ({
   const [datePickerOpen, setDatePickerOpen] = useState(false)
   
   const [createdDate, setCreatedDate] = useState<Date | undefined>(
-    createdAt ? new Date(createdAt) : undefined
+    memoDate ? new Date(memoDate) : undefined
   )
 
   const memoTypeOptions: CommonSelectItem[] = memoTypes.map(type => ({
@@ -104,18 +122,18 @@ const UpdateMemoForm = ({
     setIsSubmitting(true)
     try {
       // Exclude createdAt and updatedAt from update payload
-      const { id, name, detail, memoType, createdAt } = formData
+      const { id, name, detail, memoType, memoDate } = formData
       const updatePayload = {
         id,
         name,
         detail,
         memoType,
-        createdAt,
+        memoDate,
       }
 
       console.log("Update payload in update memo form:", updatePayload)
 
-      const result = await MemoService.instance.updateMemo({...updatePayload, createdAt: createdDate ? format(createdDate, "yyyy-MM-dd'T'HH:mm:ss") : ""})
+      const result = await MemoService.instance.updateMemo({...updatePayload, memoDate: createdDate ? format(createdDate, "yyyy-MM-dd'T'HH:mm:ss") : ""})
       if (isLeft(result)) {
         setErrorLabel(result.value.message || "Failed to update memo")
         setIsSubmitting(false)
@@ -165,14 +183,14 @@ const UpdateMemoForm = ({
       <div className={`space-y-4 transition-opacity duration-200 ${isSuccess ? 'opacity-30' : 'opacity-100'}`}>
         {/* DatePicker Field */}
         <div>
-          <Label htmlFor="createdAt" className="block text-sm font-medium text-foreground mb-2">
+          <Label htmlFor="memoDate" className="block text-sm font-medium text-foreground mb-2">
             Created At
           </Label>
           <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                id="createdAt"
+                id="memoDate"
                 className="w-48 justify-between font-normal"
                 type="button"
                 disabled={isSubmitting || isSuccess}

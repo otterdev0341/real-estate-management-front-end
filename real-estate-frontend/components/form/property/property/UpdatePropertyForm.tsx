@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { AlertCircle, Loader2, CheckCircle } from "lucide-react"
 import { usePropertyStatusContext } from "@/context/store/PropertyStatusStore"
 import { useContactContext } from "@/context/store/ContactStore"
@@ -25,7 +25,7 @@ const UpdatePropertyForm = ({
   area,
   price,
   fsp,
-  maximumBudget,
+  budget,
   propertyStatus,
   ownerBy,
   mapUrl,
@@ -36,6 +36,18 @@ const UpdatePropertyForm = ({
 }: UpdatePropertyFormProps) => {
   const { propertyStatuses, loading: statusLoading } = usePropertyStatusContext()
   const { contacts, loading: contactLoading } = useContactContext()
+
+  // Helper to get correct id from value (string)
+  const getOwnerId = (ownerValue: string) => {
+    const found = contacts.find(contact => contact.businessName === ownerValue || contact.id === ownerValue)
+    return found ? found.id : ownerValue
+  }
+  const getStatusId = (statusValue: string) => {
+    const found = propertyStatuses.find(status => status.detail === statusValue || status.id === statusValue)
+    return found ? found.id : statusValue
+  }
+
+  // Initialize formData with correct ids
   const [formData, setFormData] = useState<ReqUpdatePropertyDto>({
     id,
     name,
@@ -45,13 +57,24 @@ const UpdatePropertyForm = ({
     area,
     price,
     fsp,
-    maximumBudget,
-    propertyStatus,
-    ownerBy,
+    budget,
+    propertyStatus: getStatusId(propertyStatus),
+    ownerBy: getOwnerId(ownerBy),
     mapUrl,
     lat,
     lng,
   })
+
+  // Update formData when contacts or propertyStatuses change
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      ownerBy: getOwnerId(ownerBy),
+      propertyStatus: getStatusId(propertyStatus),
+    }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contacts, propertyStatuses, ownerBy, propertyStatus])
+
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({})
   const [errorLabel, setErrorLabel] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -284,7 +307,7 @@ const UpdatePropertyForm = ({
           <input
             type="text"
             name="maximumBudget"
-            value={formData.maximumBudget ?? ""}
+            value={formData.budget ?? ""}
             onChange={handleChange}
             placeholder="e.g., 600000 USD"
             className="w-full px-3 py-2 bg-input border border-border rounded-lg"

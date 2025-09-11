@@ -74,11 +74,6 @@ export class AuthService extends BaseService {
       // save token to cokkie
       document.cookie = `auth_token=${token}; path=/; max-age=86400`; // 1 day expiration
 
-      
-      
-
-      
-
       return right(token)
     } catch (error) {
       console.error("Error during login:", error);

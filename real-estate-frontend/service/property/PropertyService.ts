@@ -151,7 +151,7 @@ export class PropertyService extends BaseService {
           formData.append(key, value as string);
         }
       });
-
+      console.log("Updating property with ID:", id, "and data:", data);
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/property/${id}`, {
         method: "PUT",
         headers: {
@@ -204,6 +204,7 @@ export class PropertyService extends BaseService {
 
       const json = await res.json();
       const responseData: ResEntryPropertyDto = json.data;
+      
       return right(responseData);
     } catch (error) {
       return left(FetchFailed.create("PropertyService", "An unexpected error occurred during fetching property.", error));

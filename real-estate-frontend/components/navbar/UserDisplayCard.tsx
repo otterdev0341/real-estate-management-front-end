@@ -11,6 +11,7 @@ import {
 } from "@heroicons/react/24/outline"
 import { useUserContext } from "@/context/store/UserStore"
 import { AuthService } from "@/service/auth/authService"
+import { useRouter } from "next/navigation"
 
 interface UserDropdownProps {
   isOpen: boolean
@@ -22,9 +23,9 @@ export default function UserDisplayCard({ isOpen, onClose, position }: UserDropd
   const dropdownRef = useRef<HTMLDivElement>(null)
   const { user, refreshUser } = useUserContext()
   const [loggingOut, setLoggingOut] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
-    // 
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         onClose()
@@ -61,7 +62,26 @@ export default function UserDisplayCard({ isOpen, onClose, position }: UserDropd
       }, 1200)
       return
     }
-    // Handle other actions here
+    if (action === "view-info") {
+      onClose()
+      router.push("/auth/user/user-info")
+      return
+    }
+    if (action === "change-password") {
+      onClose()
+      router.push("/auth/user/change-password")
+      return
+    }
+    if (action === "change-email") {
+      onClose()
+      router.push("/auth/user/change-email")
+      return
+    }
+    if (action === "edit-info") {
+      onClose()
+      router.push("/auth/user/change-user-info")
+      return
+    }
     onClose()
   }
 

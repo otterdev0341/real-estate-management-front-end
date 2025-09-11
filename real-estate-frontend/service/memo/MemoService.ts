@@ -11,6 +11,7 @@ import BaseFetchFileRelatedDto from "@/domain/utility/BaseFetchFileRelatedDto"
 import BaseAttachFileToTarget from "@/domain/utility/BaseAttachFileToTarget"
 import BaseRemoveFileFromTarget from "@/domain/utility/BaseRemoveFileFromTarget"
 import ResEntryPropertyDto from "@/domain/property/property/ResEntryPropertyDto"
+import formatDateToMicroseconds from "@/utility/formatDateToMicroSeconds"
 
 
 export class MemoService extends BaseService {
@@ -34,9 +35,7 @@ export class MemoService extends BaseService {
     }
     const token = this.getUserToken().get();
 
-    for (const [key, value] of Object.entries(reqCreateMemoDto)) {
-      console.log(`${key}: ${value}`);
-    }
+    
 
     // Build FormData for multipart
     const formData = new FormData();
@@ -48,11 +47,24 @@ export class MemoService extends BaseService {
         } else if (Array.isArray(value)) {
           // For arrays of files or strings
           value.forEach((item) => formData.append(key, item));
-        } else {
+        } else if (value instanceof Date) {
+          // Convert Date to ISO string
+          const result = formatDateToMicroseconds(value);
+          formData.append(key, result);
+        
+        } else if (key === "createdAt") {
+          // Skip createdAt field if present
+          return;
+        }
+        else {
           formData.append(key, value as string);
         }
       }
     });
+
+    for (const [key, value] of formData.entries()) {
+      console.log(`${key}: ${value}`);
+    }
 
     const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/memo`, {
       method: "POST",
@@ -75,6 +87,7 @@ export class MemoService extends BaseService {
     }
 
     const responseData: ResEntryMemoDto = await res.json();
+    console.log("Created memo data:", responseData);
     return right(responseData);
   } catch (error) {
     return left(CreateFailed.create("MemoService", "An unexpected error occurred during memo creation.", error));
@@ -159,7 +172,10 @@ export class MemoService extends BaseService {
           }
         }
       });
-
+      console.log("FormData entries for updateMemo:");
+      formData.forEach((value, key) => {
+        console.log(`${key}: ${value}`);
+      });
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/memo/${reqUpdateMemoDto.id}`, {
         method: "PUT",
         headers: {
@@ -216,7 +232,7 @@ export class MemoService extends BaseService {
       const json = await res.json();
       // console.log("Full response:", json); // Add this line
       const responseData: ResEntryMemoDto = json.data;
-      // console.log("Memo data:", responseData); // This is your original log
+      console.log("Memo data:", responseData); // This is your original log
       return right(responseData);
     } catch (error) {
       return left(FetchFailed.create("MemoService", "An unexpected error occurred during fetching memo.", error));
@@ -252,9 +268,9 @@ export class MemoService extends BaseService {
       }
 
       const json = await res.json();
-      console.log(json);
+      
       const items: FileUpload[] = json.data ?? [];
-      console.log("Fetched files memo service:", items);
+      
       return right(items);
     } catch (error) {
       return left(FetchFailed.create("MemoService", "An unexpected error occurred during fetching memo files.", error));

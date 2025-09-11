@@ -2,12 +2,13 @@
 
 import { createContext, useContext, useEffect, useState } from "react"
 import { ContactService } from "@/service/contact/ContactService"
-import { ContactDto } from "@/domain/contact/contact/ResEntryContactDto"
+
 import { BaseQuery } from "@/domain/utility/BaseQueryDto"
 import { isRight } from "@/implementation/Either"
+import ResEntryContactDto from "@/domain/contact/contact/ResEntryContactDto"
 
 interface ContactContextValue {
-  contacts: ContactDto[]
+  contacts: ResEntryContactDto[]
   loading: boolean
   refreshContacts: () => Promise<void>
 }
@@ -21,7 +22,7 @@ const ContactContext = createContext<ContactContextValue>({
 export const useContactContext = () => useContext(ContactContext)
 
 export const ContactProvider = ({ children }: { children: React.ReactNode }) => {
-  const [contacts, setContacts] = useState<ContactDto[]>([])
+  const [contacts, setContacts] = useState<ResEntryContactDto[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchContacts = async () => {

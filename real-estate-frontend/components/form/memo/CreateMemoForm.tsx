@@ -10,24 +10,19 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ChevronDownIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
-
-interface FileUpload {
-  name: string
-  size: number
-  type: string
-}
+import ReqCreateMemoDto from "@/domain/memo/ReqCreateMemoDto"
 
 interface CreateMemoFormProps {
   onSubmit?: (memoData: any) => void
   onCancel?: () => void
 }
 
-const initialState = {
+const initialState: ReqCreateMemoDto = {
   name: "",
   detail: "",
   memoType: "",
-  files: [] as FileUpload[],
-  createdAt: undefined as Date | undefined,
+  files: [] as File[],
+  memoDate: new Date(), // Date type is correct
 }
 
 const CreateMemoForm = ({ onSubmit, onCancel }: CreateMemoFormProps) => {
@@ -66,12 +61,7 @@ const CreateMemoForm = ({ onSubmit, onCancel }: CreateMemoFormProps) => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const filesArr: FileUpload[] = Array.from(e.target.files).map((file) => ({
-        name: file.name,
-        size: file.size,
-        type: file.type,
-      }))
-      setFormData({ ...formData, files: filesArr })
+      setFormData({ ...formData, files: Array.from(e.target.files) }) // <-- Store as File[]
     }
   }
 
@@ -80,24 +70,23 @@ const CreateMemoForm = ({ onSubmit, onCancel }: CreateMemoFormProps) => {
   }
 
   const handleDateChange = (date: Date | undefined) => {
-    setFormData({ ...formData, createdAt: date })
+    setFormData({ ...formData, memoDate: date ?? new Date() }) // fallback to current date if undefined
     setDatePickerOpen(false)
   }
 
   const handleSubmit = () => {
     if (!validateForm()) return
-    const submitData = {
+    const submitData: ReqCreateMemoDto = {
       ...formData,
-      // Format date as yyyy-MM-ddTHH:mm:ss (no milliseconds, no Z)
-      createdAt: formData.createdAt
-        ? format(formData.createdAt, "yyyy-MM-dd'T'HH:mm:ss")
-        : undefined,
+      memoDate: formData.memoDate instanceof Date
+        ? formData.memoDate
+        : new Date(formData.memoDate ?? Date.now()), // ensure it's a Date
     }
     if (onSubmit) onSubmit(submitData)
   }
 
   const getAttachmentText = () => {
-    const count = formData.files.length
+    const count = (formData.files ?? []).length
     if (count === 0) return "attachment"
     if (count === 1) return "1 attachment"
     return `${count} attachments`
@@ -144,7 +133,6 @@ const CreateMemoForm = ({ onSubmit, onCancel }: CreateMemoFormProps) => {
         </div>
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">Files</label>
-          
           {/* Hidden file input */}
           <input
             ref={fileInputRef}
@@ -153,7 +141,6 @@ const CreateMemoForm = ({ onSubmit, onCancel }: CreateMemoFormProps) => {
             onChange={handleFileChange}
             className="hidden"
           />
-          
           {/* Custom attachment button */}
           <button
             type="button"
@@ -163,36 +150,35 @@ const CreateMemoForm = ({ onSubmit, onCancel }: CreateMemoFormProps) => {
             <Paperclip className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">{getAttachmentText()}</span>
           </button>
-          
           {/* File list */}
-          {formData.files.length > 0 && (
+          {(formData.files?.length ?? 0) > 0 && (
             <ul className="mt-2 text-xs text-muted-foreground">
-              {formData.files.map((file, idx) => (
+              {(formData.files ?? []).map((file, idx) => (
                 <li key={idx}>{file.name} ({file.type}, {file.size} bytes)</li>
               ))}
             </ul>
           )}
         </div>
         <div>
-          <Label htmlFor="createdAt" className="block text-sm font-medium text-foreground mb-2">
+          <Label htmlFor="memoDate" className="block text-sm font-medium text-foreground mb-2">
             Created At
           </Label>
           <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                id="createdAt"
+                id="memoDate"
                 className="w-48 justify-between font-normal"
                 type="button"
               >
-                {formData.createdAt ? formData.createdAt.toLocaleDateString() : "Select date"}
+                {formData.memoDate ? formData.memoDate.toLocaleDateString() : "Select date"}
                 <ChevronDownIcon />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto overflow-hidden p-0" align="start">
               <Calendar
                 mode="single"
-                selected={formData.createdAt}
+                selected={formData.memoDate instanceof Date ? formData.memoDate : new Date(formData.memoDate ?? Date.now())}
                 captionLayout="dropdown"
                 onSelect={handleDateChange}
               />

@@ -1,4 +1,4 @@
-export interface ReqCreateContactDto {
+export default interface ReqCreateContactDto {
   businessName: string;
   internalName?: string;
   detail?: string;

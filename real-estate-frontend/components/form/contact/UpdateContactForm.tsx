@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ContactService } from "@/service/contact/ContactService"
 import { isLeft } from "@/implementation/Either"
 import { AlertCircle, Loader2, CheckCircle } from "lucide-react"
@@ -40,19 +40,36 @@ const UpdateContactForm = ({
   onSuccess,
 }: UpdateContactFormProps) => {
   const { contactTypes } = useContactTypeContext()
+  // Find the contact type id from detail string (if contactType is not an id)
+  const getContactTypeId = (contactTypeDetail: string) => {
+    const found = contactTypes.find(type => type.detail === contactTypeDetail)
+    return found ? found.id : contactTypeDetail // fallback to original if not found
+  }
+
+  // Initialize formData with correct contactType id
   const [formData, setFormData] = useState<ReqUpdateContactDto>({
     id,
     businessName,
     internalName,
     detail,
     note,
-    contactType,
+    contactType: getContactTypeId(contactType),
     address,
     phone,
     mobilePhone,
     line,
     email,
   })
+
+  // When contactTypes or contactType prop changes, update formData.contactType to correct id
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      contactType: getContactTypeId(contactType),
+    }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contactTypes, contactType])
+
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({})
   const [errorLabel, setErrorLabel] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -83,7 +100,7 @@ const UpdateContactForm = ({
   }
 
   const handleContactTypeSelect = (item: CommonSelectItem) => {
-    setFormData({ ...formData, contactType: item.value })
+    setFormData({ ...formData, contactType: item.id })
     setValidationErrors({ ...validationErrors, contactType: "" })
     setErrorLabel("")
   }

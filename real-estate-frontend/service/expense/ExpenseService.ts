@@ -116,6 +116,7 @@ export class ExpenseService extends BaseService {
         return left(Unauthorized.create("ExpenseService", "No authentication token found."));
       }
       const token = this.getUserToken().get();
+      console.log("Updating expense with ID:", id, "and data:", data);
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/expense/${id}`, {
         method: "PUT",
         headers: {
