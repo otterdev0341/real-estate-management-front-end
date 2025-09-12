@@ -34,7 +34,7 @@ const UpdateInvestmentForm = ({
   const [formData, setFormData] = useState({
     propertyId: "",
     note: investment.getNote() || "",
-    createdAt: investment.getCreatedAt() ? new Date(investment.getCreatedAt()) : undefined,
+    investmentDate: investment.getInvestmentDate() ? new Date(investment.getInvestmentDate()) : undefined,
     files: [] as File[],
   })
   const [itemInputs, setItemInputs] = useState<{ id: string; contact: string; amount: string; percent: string }[]>(
@@ -95,7 +95,7 @@ const UpdateInvestmentForm = ({
     const errors: { [key: string]: string } = {}
     if (!formData.propertyId.trim()) errors.propertyId = "Property is required"
     if (!formData.note.trim()) errors.note = "Note is required"
-    if (!formData.createdAt) errors.createdAt = "Created date is required"
+    if (!formData.investmentDate) errors.createdAt = "Created date is required"
     if (itemInputs.length === 0) errors.items = "At least one investment item is required"
     itemInputs.forEach((item, idx) => {
       if (!item.contact.trim()) errors[`item-contact-${idx}`] = "Contact is required"
@@ -123,7 +123,7 @@ const UpdateInvestmentForm = ({
   }
 
   const handleDateChange = (date: Date | undefined) => {
-    setFormData({ ...formData, createdAt: date })
+    setFormData({ ...formData, investmentDate: date })
     setDatePickerOpen(false)
     setValidationErrors({ ...validationErrors, createdAt: "" })
     setSubmitError("")
@@ -201,7 +201,7 @@ const UpdateInvestmentForm = ({
       )
       const dto = new ReqUpdateInvestmentDto(
         investment.getId(),
-        formData.createdAt ? formData.createdAt.toISOString() : "",
+        formData.investmentDate ? formData.investmentDate.toISOString() : "",
         formData.note,
         formData.propertyId,
         items
@@ -338,8 +338,8 @@ const UpdateInvestmentForm = ({
                 type="button"
                 disabled={isSubmitting || isSuccess}
               >
-                {formData.createdAt
-                  ? format(formData.createdAt, "yyyy-MM-dd")
+                {formData.investmentDate
+                  ? format(formData.investmentDate, "yyyy-MM-dd")
                   : "Select date"}
                 <ChevronDownIcon />
               </Button>
@@ -347,7 +347,7 @@ const UpdateInvestmentForm = ({
             <PopoverContent className="w-auto overflow-hidden p-0" align="start">
               <Calendar
                 mode="single"
-                selected={formData.createdAt}
+                selected={formData.investmentDate}
                 captionLayout="dropdown"
                 onSelect={handleDateChange}
               />
@@ -465,7 +465,7 @@ const UpdateInvestmentForm = ({
           disabled={
             !formData.propertyId.trim() ||
             !formData.note.trim() ||
-            !formData.createdAt ||
+            !formData.investmentDate ||
             itemInputs.length === 0 ||
             isSubmitting ||
             isSuccess

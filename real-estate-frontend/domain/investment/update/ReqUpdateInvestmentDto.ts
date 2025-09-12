@@ -3,21 +3,21 @@ import ReqUpdateInvestmentItemDto from "./ReqUpdateInvestmentItemDto";
 
 export default class ReqUpdateInvestmentDto extends BaseDateConverter {
     private id: string; // uuid or empty
-    private createdAt: string;
+    private investmentDate: string;
     private note: string;
     private property: string; // uuid
     private items: ReqUpdateInvestmentItemDto[];
 
     constructor(
         id: string,
-        createdAt: string,
+        investmentDate: string,
         note: string,
         property: string,
         items: ReqUpdateInvestmentItemDto[]
     ) {
         super();
         this.id = id;
-        this.createdAt = createdAt;
+        this.investmentDate = investmentDate;
         this.note = note;
         this.property = property;
         this.items = items;
@@ -28,8 +28,8 @@ export default class ReqUpdateInvestmentDto extends BaseDateConverter {
         return this.id;
     }
 
-    public getCreatedAt(): string {
-        return this.createdAt;
+    public getInvestmentDate(): string {
+        return this.investmentDate;
     }
 
     public getNote(): string {
@@ -49,8 +49,8 @@ export default class ReqUpdateInvestmentDto extends BaseDateConverter {
         this.id = id;
     }
 
-    public setCreatedAt(createdAt: string): void {
-        this.createdAt = createdAt;
+    public setInvestmentDate(createdAt: Date): void {
+        this.investmentDate = this.formatDateToMicroseconds(createdAt);
     }
 
     public setNote(note: string): void {
@@ -70,7 +70,7 @@ export default class ReqUpdateInvestmentDto extends BaseDateConverter {
 
         const data = {
             note: this.note,
-            createdAt: this.createdAt,
+            investmentDate: this.investmentDate,
             property: this.property,
             items: this.items,
         };

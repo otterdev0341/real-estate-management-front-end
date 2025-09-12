@@ -9,7 +9,7 @@ export default class ResEntryInvestmentDto extends BaseDateConverter {
     private items: ResEntryInvestmentItemDto[];
     private totalInvestedAmount: number;
     private investorCount: number;
-    private createdAt: Date;
+    private investmentDate: Date;
     private updatedAt: Date;
 
     constructor(
@@ -18,7 +18,7 @@ export default class ResEntryInvestmentDto extends BaseDateConverter {
         transaction: string,
         property: string,
         items: ResEntryInvestmentItemDto[],
-        createdAt: string,
+        investmentDate: string,
         updatedAt: string
     ) {
         super();
@@ -29,7 +29,7 @@ export default class ResEntryInvestmentDto extends BaseDateConverter {
         this.items = items;
         this.totalInvestedAmount = this.calculateTotalInvestedAmount();
         this.investorCount = items.length;
-        this.createdAt = this.convertStringToDate(createdAt);
+        this.investmentDate = this.convertStringToDate(investmentDate);
         this.updatedAt = this.convertStringToDate(updatedAt);
     }
 
@@ -63,8 +63,8 @@ export default class ResEntryInvestmentDto extends BaseDateConverter {
         return this.totalInvestedAmount;
     }
 
-    public getCreatedAt(): Date {
-        return this.createdAt;
+    public getInvestmentDate(): Date {
+        return this.investmentDate;
     }
 
     public getUpdatedAt(): Date {
@@ -97,8 +97,8 @@ export default class ResEntryInvestmentDto extends BaseDateConverter {
         this.totalInvestedAmount = this.calculateTotalInvestedAmount();
     }
 
-    public setCreatedAt(createdAt: Date): void {
-        this.createdAt = createdAt;
+    public setInvestmentDate(createdAt: Date): void {
+        this.investmentDate = createdAt;
     }
 
     public setUpdatedAt(updatedAt: Date): void {

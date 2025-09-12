@@ -76,7 +76,7 @@ const ViewPropertyInvestmentTable = ({ propertyId }: ViewPropertyInvestmentTable
               <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs text-muted-foreground">
-                    {investment.getCreatedAt() ? formatDate(investment.getCreatedAt().toString()) : ""}
+                    {investment.getInvestmentDate() ? formatDate(investment.getInvestmentDate().toString()) : ""}
                   </span>
                   <span className="font-semibold text-foreground">Investment #{investment.getId().slice(0, 6)}</span>
                   <span className="ml-2 text-muted-foreground">{investment.getNote()}</span>

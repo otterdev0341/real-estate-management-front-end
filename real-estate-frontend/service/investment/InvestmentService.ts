@@ -32,10 +32,8 @@ export class InvestmentService extends BaseService {
             const token = this.getUserToken().get();
 
             const formData = reqCreateInvestmentDto.toFormData();
-            console.log("Creating investment with data in investment service:");
-            for (const pair of formData.entries()) {
-                console.log(`${pair[0]}: ${pair[1]}`);
-            }
+            
+           
             const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/investment`, {
                 method: "POST",
                 headers: {
@@ -70,7 +68,7 @@ export class InvestmentService extends BaseService {
                         item.percent
                     )
                 ),
-                responseData.createdAt,
+                responseData.investmentDate,
                 responseData.updatedAt
             ));
         } catch (error) {
@@ -170,7 +168,7 @@ export class InvestmentService extends BaseService {
                                 item.percent
                             )
                         ),
-                        investment.createdAt,
+                        investment.investmentDate,
                         investment.updatedAt
                     )
                 )
@@ -232,7 +230,7 @@ export class InvestmentService extends BaseService {
 
             const responseData = await res.json();
             const data = responseData.data;
-            console.log("Fetched investment data:", data);
+            
             const items = Array.isArray(data.items)
                 ? data.items.map((item: any) =>
                     new ResEntryInvestmentItemDto(
@@ -251,7 +249,7 @@ export class InvestmentService extends BaseService {
                 data.transaction,
                 data.property,
                 items,
-                data.createdAt,
+                data.investmentDate,
                 data.updatedAt
             );
 

@@ -41,7 +41,7 @@ export const PaymentProvider = ({ children }: { children: React.ReactNode }) => 
 
   useEffect(() => {
     // Log payments when they actually change
-    console.log("Updated payments in PaymentProvider", payments)
+    // console.log("Updated payments in PaymentProvider", payments)
   }, [payments])
 
   return (

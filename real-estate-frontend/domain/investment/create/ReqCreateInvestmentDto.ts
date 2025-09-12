@@ -2,21 +2,21 @@ import { BaseDateConverter } from "@/domain/utility/BaseDateConverter";
 import ReqCreateInvestmentItemDto from "./ReqCreateInvestmentItemDto";
 
 export default class ReqCreateInvestmentDto extends BaseDateConverter {
-    private createdAt: string; // ISO 8601 format
+    private investmentDate: string; // ISO 8601 format
     private note: string;
     private property: string; // UUID
     private items: ReqCreateInvestmentItemDto[];
     private files: Blob[];
 
     constructor(
-        createdAt: string,
+        investmentDate: string,
         note: string,
         property: string,
         items: ReqCreateInvestmentItemDto[],
         files: File[] = []
     ) {
         super();
-        this.createdAt = createdAt;
+        this.investmentDate = investmentDate;
         this.note = note;
         this.property = property;
         this.items = items;
@@ -24,8 +24,8 @@ export default class ReqCreateInvestmentDto extends BaseDateConverter {
     }
 
     // Getters
-    public getCreatedAt(): string {
-        return this.createdAt;
+    public getInvestmentDate(): string {
+        return this.investmentDate;
     }
 
     public getNote(): string {
@@ -45,8 +45,8 @@ export default class ReqCreateInvestmentDto extends BaseDateConverter {
     }
 
     // Setters
-    public setCreatedAt(createdAt: Date): void {
-        this.createdAt = this.formatDateToMicroseconds(createdAt);
+    public setInvestmentDate(createdAt: Date): void {
+        this.investmentDate = this.formatDateToMicroseconds(createdAt);
     }
 
     public setNote(note: string): void {
@@ -70,7 +70,7 @@ export default class ReqCreateInvestmentDto extends BaseDateConverter {
 
         const data = {
             note: this.note,
-            createdAt: this.createdAt,
+            investmentDate: this.investmentDate,
             property: this.property,
             items: this.items,
         };

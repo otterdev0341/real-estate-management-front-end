@@ -41,7 +41,7 @@ export const InvestmentProvider = ({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     // Log investments when they actually change
-    console.log("Updated investments in InvestmentProvider", investments)
+    // console.log("Updated investments in InvestmentProvider", investments)
   }, [investments])
 
   return (

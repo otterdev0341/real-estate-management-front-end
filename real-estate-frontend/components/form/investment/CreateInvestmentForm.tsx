@@ -29,7 +29,7 @@ interface CreateInvestmentFormProps {
 }
 
 const initialState = {
-  createdAt: new Date(),
+  investmentDate: new Date(),
   note: "",
   propertyId: "",
   contactId: "",
@@ -68,7 +68,7 @@ const CreateInvestmentForm = ({ onSubmit, onCancel }: CreateInvestmentFormProps)
     const errors: { [key: string]: string } = {}
     if (!formData.propertyId.trim()) errors.propertyId = "Property is required"
     if (!formData.note.trim()) errors.note = "Note is required"
-    if (!formData.createdAt) errors.createdAt = "Created date is required"
+    if (!formData.investmentDate) errors.createdAt = "Created date is required"
     if (itemInputs.length === 0) errors.items = "At least one investment item is required"
     itemInputs.forEach((item, idx) => {
       if (!item.contact.trim()) errors[`item-contact-${idx}`] = "Contact is required"
@@ -122,7 +122,7 @@ const CreateInvestmentForm = ({ onSubmit, onCancel }: CreateInvestmentFormProps)
   }
 
   const handleDateChange = (date: Date | undefined) => {
-    setFormData({ ...formData, createdAt: date ?? new Date() })
+    setFormData({ ...formData, investmentDate: date ?? new Date() })
     setDatePickerOpen(false)
   }
 
@@ -169,9 +169,9 @@ const CreateInvestmentForm = ({ onSubmit, onCancel }: CreateInvestmentFormProps)
       )
       // Prepare DTO
       const dto = new ReqCreateInvestmentDto(
-        formData.createdAt instanceof Date
-          ? formData.createdAt.toISOString()
-          : formData.createdAt,
+        formData.investmentDate instanceof Date
+          ? formData.investmentDate.toISOString()
+          : formData.investmentDate,
         formData.note,
         formData.propertyId,
         items,
@@ -272,10 +272,10 @@ const CreateInvestmentForm = ({ onSubmit, onCancel }: CreateInvestmentFormProps)
               className="w-48 justify-between font-normal"
               type="button"
             >
-              {formData.createdAt
-                ? formData.createdAt instanceof Date
-                  ? format(formData.createdAt, "yyyy-MM-dd")
-                  : formData.createdAt
+              {formData.investmentDate
+                ? formData.investmentDate instanceof Date
+                  ? format(formData.investmentDate, "yyyy-MM-dd")
+                  : formData.investmentDate
                 : "Select date"}
               <ChevronDownIcon />
             </Button>
@@ -283,7 +283,7 @@ const CreateInvestmentForm = ({ onSubmit, onCancel }: CreateInvestmentFormProps)
           <PopoverContent className="w-auto overflow-hidden p-0" align="start">
             <Calendar
               mode="single"
-              selected={formData.createdAt instanceof Date ? formData.createdAt : new Date(formData.createdAt)}
+              selected={formData.investmentDate instanceof Date ? formData.investmentDate : new Date(formData.investmentDate)}
               captionLayout="dropdown"
               onSelect={date => handleDateChange(date)}
             />
@@ -323,7 +323,13 @@ const CreateInvestmentForm = ({ onSubmit, onCancel }: CreateInvestmentFormProps)
                 type="number"
                 placeholder="0"
                 value={item.amount}
-                onChange={e => handleItemChange(idx, "amount", e.target.value)}
+                onChange={e => {
+                  const val = e.target.value
+                  // Only allow 0 or positive numbers
+                  if (val === "" || (!isNaN(Number(val)) && Number(val) >= 0)) {
+                    handleItemChange(idx, "amount", val)
+                  }
+                }}
                 className={`px-2 py-1 border rounded w-full text-sm text-center ${
                   validationErrors[`item-amount-${idx}`] ? "border-red-500" : "border-border"
                 }`}
@@ -397,7 +403,7 @@ const CreateInvestmentForm = ({ onSubmit, onCancel }: CreateInvestmentFormProps)
           disabled={
             !formData.propertyId.trim() ||
             !formData.note.trim() ||
-            !formData.createdAt ||
+            !formData.investmentDate ||
             itemInputs.length === 0 ||
             isSubmitting
           }

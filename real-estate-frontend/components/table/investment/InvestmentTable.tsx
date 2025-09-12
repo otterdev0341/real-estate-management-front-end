@@ -140,7 +140,7 @@ const InvestmentTable = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-foreground">{investment.getTotalInvestedAmount()?.toLocaleString()}</td>
                     <td className="px-6 py-4 text-sm text-foreground">{investment.getInvestorCount()}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(investment.getCreatedAt()?.toString())}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(investment.getInvestmentDate()?.toString())}</td>
                     <td className="px-6 py-4 text-sm flex gap-2">
                       <button
                         type="button"
@@ -206,7 +206,7 @@ const InvestmentTable = () => {
                   Note: <span className="font-medium text-foreground">{investment.getNote()}</span>
                 </p>
                 <p className="text-muted-foreground text-xs mt-1">
-                  Created: {formatDate(investment.getCreatedAt()?.toString())}
+                  Created: {formatDate(investment.getInvestmentDate()?.toString())}
                 </p>
                 <p className="text-muted-foreground text-xs">
                   Investment capital: {investment.getTotalInvestedAmount()?.toLocaleString()}

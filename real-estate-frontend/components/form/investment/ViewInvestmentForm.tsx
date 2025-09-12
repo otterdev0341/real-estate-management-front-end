@@ -185,7 +185,7 @@ const ViewInvestmentForm = ({ investmentId }: ViewInvestmentFormProps) => {
               <div>
                 <div className="text-sm font-semibold text-gray-600 mb-2">Created At</div>
                 <div className="text-base text-gray-800">
-                  {investment.getCreatedAt() ? formatDate(investment.getCreatedAt().toISOString()) : "-"}
+                  {investment.getInvestmentDate() ? formatDate(investment.getInvestmentDate().toISOString()) : "-"}
                 </div>
               </div>
               <div>

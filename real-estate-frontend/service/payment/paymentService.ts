@@ -33,10 +33,10 @@ export class PaymentService extends BaseService {
             const token = this.getUserToken().get();
 
             const formData = reqCreatePaymentDto.toFormData();
-            console.log("FormData entries:", formData);
-            for (const pair of formData.entries()) {
-                console.log(`${pair[0]}: ${pair[1]}`);
-            }
+            // console.log("FormData entries:", formData);
+            // for (const pair of formData.entries()) {
+            //     console.log(`${pair[0]}: ${pair[1]}`);
+            // }
             const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/payment`, {
                 method: "POST",
                 headers: {
@@ -105,7 +105,7 @@ export class PaymentService extends BaseService {
             }
 
             const responseData = await res.json();
-            console.log("Raw payment update response data:", responseData);
+            
             return right(new ResEntryPaymentDto(
                 responseData.id,
                 responseData.transactionType,
@@ -143,7 +143,7 @@ export class PaymentService extends BaseService {
             }
 
             const responseData = await res.json();
-            console.log("Raw payment fetch response data:", responseData);
+            
 
             // Correct mapping: responseData.data is an array of payments
             const payments: ResEntryPaymentDto[] = Array.isArray(responseData.data)
@@ -169,7 +169,7 @@ export class PaymentService extends BaseService {
                 )
                 : [];
 
-            console.log("Fetched payments:", payments);
+            
             return right(payments);
         } catch (error) {
             return left(FetchFailed.create("PaymentService", "An unexpected error occurred during fetching payments.", error));
@@ -373,7 +373,7 @@ export class PaymentService extends BaseService {
             }
 
             const responseData = await res.json();
-            console.log("Raw payment fetch by property ID response data:", responseData);
+            
 
             // Correct mapping: responseData.data is an array of payments
             const payments: ResEntryPaymentDto[] = Array.isArray(responseData.data)
@@ -399,7 +399,7 @@ export class PaymentService extends BaseService {
                 )
                 : [];
 
-            console.log("Fetched payments by property ID:", payments);
+            
             return right(payments);
         } catch (error) {
             return left(FetchFailed.create("PaymentService", "An unexpected error occurred during fetching payments by property ID.", error));
