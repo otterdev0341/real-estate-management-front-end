@@ -306,7 +306,7 @@ const UpdatePropertyForm = ({
           <label className="block text-sm font-medium text-foreground mb-2">Maximum Budget</label>
           <input
             type="text"
-            name="maximumBudget"
+            name="budget"
             value={formData.budget ?? ""}
             onChange={handleChange}
             placeholder="e.g., 600000 USD"

@@ -17,6 +17,7 @@ import BaseRemoveFileFromTarget from "@/domain/utility/BaseRemoveFileFromTarget"
 import ViewPropertyPaymentTable from "@/components/form/property/property/payment/ViewPropertyPaymentTable"
 import ViewPropertyPaymentTemplate from "@/components/form/property/property/payment/ViewPropertyPaymentTemplate"
 import ViewPropertyInvestmentTemplate from "@/components/form/property/property/investment/ViewPropertyInvestmentTemplate"
+import PropertyForcase from "@/components/form/property/forcase/PropertyForcase"
 
 const TABS = [
   { key: "detail", label: "View Details" },
@@ -105,8 +106,7 @@ export default function PropertyDetailPage() {
           )}
           {activeTab === "forcast" && (
             <div>
-              <h2 className="text-lg font-semibold mb-2">Forecast</h2>
-              <div className="text-muted-foreground">Forecast data and charts go here.</div>
+              <PropertyForcase propertyId={propertyId} />
             </div>
           )}
           {activeTab === "propertyType" && (

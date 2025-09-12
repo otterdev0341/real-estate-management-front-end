@@ -28,7 +28,7 @@ const initialState = {
   area: "",
   price: "",
   fsp: "",
-  maximumBudget: "",
+  budget: "",
   propertyStatus: "",
   ownerBy: "",
   mapUrl: "",
@@ -213,7 +213,7 @@ const CreatePropertyForm = ({ onSubmit, onCancel }: CreatePropertyFormProps) => 
           <input
             type="text"
             name="maximumBudget"
-            value={formData.maximumBudget ?? ""}
+            value={formData.budget ?? ""}
             onChange={handleChange}
             placeholder="e.g., 600000 USD"
             className="w-full px-3 py-2 bg-input border border-border rounded-lg"
