@@ -1,7 +1,8 @@
 "use client"
 
-import React from "react"
+import React, { useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
+import { createPortal } from "react-dom"
 
 import { useState, useRef } from "react"
 import {
@@ -19,6 +20,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline"
 import UserDisplayCard from "./UserDisplayCard"
+import ModalStore, { useModalStore } from "@/context/store/ModalStore"
 
 
 const navigationItems = [
@@ -27,8 +29,8 @@ const navigationItems = [
   { name: "Contact", icon: UserGroupIcon, href: "/service/contact" },
   { name: "Expense", icon: CurrencyDollarIcon, href: "/service/expense" },
   { name: "Memo", icon: PencilSquareIcon, href: "/service/memo" },
-  { name: "File", icon: DocumentIcon, href: "#" },
-  { name: "Report", icon: ChartBarIcon, href: "#" },
+  // { name: "File", icon: DocumentIcon, href: "#" },
+  { name: "Report", icon: ChartBarIcon, href: "/service/report" },
   { name: "Sale", icon: ShoppingCartIcon, href: "/service/sale" },
   { name: "Payment", icon: CreditCardIcon, href: "/service/payment" },
   { name: "Investment", icon: ArrowTrendingUpIcon, href: "/service/investment" },
@@ -56,20 +58,25 @@ export function VerticalNavbar() {
   const [loadingItem, setLoadingItem] = useState<string | null>(null)
   const avatarRef = useRef<HTMLButtonElement>(null)
   const router = useRouter()
-
+  
+  const {setMobileModalOpen} = useModalStore();
   const handleNavigation = async (href: string, itemName: string) => {
     if (href === "#") return
-
+    
     setLoadingItem(itemName)
     setActiveItem(itemName)
     setIsMobileMenuOpen(false)
 
-    await new Promise((resolve) => setTimeout(resolve, 400))
-
+    await new Promise((resolve) => setTimeout(resolve, 700))
+    
     router.push(href)
 
     setTimeout(() => setLoadingItem(null), 500)
   }
+
+  useEffect(() => {
+    setMobileModalOpen(isMobileMenuOpen)
+  }, [isMobileMenuOpen])
 
   const handleAvatarClick = (event: React.MouseEvent) => {
     if (avatarRef.current) {
@@ -152,7 +159,7 @@ export function VerticalNavbar() {
       </div>
 
       {/* Mobile Hamburger Button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
+      <div className="lg:hidden fixed top-4 left-4 z-[100]">
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className={`p-3 rounded-xl shadow-xl transition-all duration-300 border ${
@@ -170,77 +177,75 @@ export function VerticalNavbar() {
       </div>
 
       {/* Mobile Menu */}
-      <div
-        className={`lg:hidden fixed inset-0 z-40 transition-all duration-300 ${
-          isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        }`}
-      >
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
-
-        {/* Drawer */}
+      {typeof window !== "undefined" && isMobileMenuOpen && createPortal(
         <div
-          className={`absolute left-0 top-0 h-full w-80 bg-white/10 backdrop-blur-xl shadow-2xl border-r border-white/20 transform transition-transform duration-300 ease-in-out ${
-            isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+          className="lg:hidden fixed inset-0 z-[100] transition-all duration-300 opacity-100 pointer-events-auto"
         >
-          <div className="flex flex-col h-full p-6 pt-20">
-            {/* Navigation Items */}
-            <div className="flex-1 overflow-y-auto scrollbar-hide">
-              <div className="flex flex-col space-y-2 pb-4">
-                {navigationItems.map((item, index) => {
-                  const Icon = item.icon
-                  const itemName = item.name || "Dashboard"
-                  const isLoading = loadingItem === itemName
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => handleNavigation(item.href, itemName)}
-                      disabled={isLoading}
-                      className={`
-                        flex items-center space-x-3 p-4 rounded-xl transition-all duration-300 text-left backdrop-blur-sm
-                        ${
-                          activeItem === itemName
-                            ? "bg-blue-600/80 text-white shadow-lg border border-blue-400/50"
-                            : "text-gray-700 hover:bg-blue-500/20 hover:text-blue-800 border border-transparent hover:border-blue-300/30 bg-white/40"
-                        }
-                        ${isLoading ? "opacity-75 cursor-not-allowed" : ""}
-                      `}
-                    >
-                      {isLoading ? (
-                        <div className="w-6 h-6 animate-spin">
-                          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-                        </div>
-                      ) : (
-                        <Icon className="w-6 h-6" />
-                      )}
-                      <span className="font-medium">{isLoading ? "Loading..." : itemName}</span>
-                    </button>
-                  )
-                })}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
+          {/* Drawer */}
+          <div
+            className="absolute left-0 top-0 h-full w-80 bg-white/10 backdrop-blur-xl shadow-2xl border-r border-white/20 transform transition-transform duration-300 ease-in-out translate-x-0"
+          >
+            <div className="flex flex-col h-full p-6 pt-20">
+              {/* Navigation Items */}
+              <div className="flex-1 overflow-y-auto scrollbar-hide">
+                <div className="flex flex-col space-y-2 pb-4">
+                  {navigationItems.map((item, index) => {
+                    const Icon = item.icon
+                    const itemName = item.name || "Dashboard"
+                    const isLoading = loadingItem === itemName
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => handleNavigation(item.href, itemName)}
+                        disabled={isLoading}
+                        className={`
+                          flex items-center space-x-3 p-4 rounded-xl transition-all duration-300 text-left backdrop-blur-sm
+                          ${
+                            activeItem === itemName
+                              ? "bg-blue-600/80 text-white shadow-lg border border-blue-400/50"
+                              : "text-gray-700 hover:bg-blue-500/20 hover:text-blue-800 border border-transparent hover:border-blue-300/30 bg-white/40"
+                          }
+                          ${isLoading ? "opacity-75 cursor-not-allowed" : ""}
+                        `}
+                      >
+                        {isLoading ? (
+                          <div className="w-6 h-6 animate-spin">
+                            <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                          </div>
+                        ) : (
+                          <Icon className="w-6 h-6" />
+                        )}
+                        <span className="font-medium">{isLoading ? "Loading..." : itemName}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* User Info Section - styled as navigation item */}
+              <div className="flex-shrink-0 border-t border-white/20 pt-4">
+                <button
+                  onClick={handleAvatarClick}
+                  className={`
+                    flex items-center space-x-3 p-4 rounded-xl transition-all duration-300 text-left w-full backdrop-blur-sm
+                    text-gray-700 hover:bg-blue-500/20 hover:text-blue-800 border border-transparent hover:border-blue-300/30 bg-white/40
+                  `}
+                >
+                  <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center">
+                    <span className="text-white text-xs font-semibold">JD</span>
+                  </div>
+                  <div>
+                    <p className="font-medium">John Doe</p>
+                    <p className="text-sm opacity-70">Administrator</p>
+                  </div>
+                </button>
               </div>
             </div>
-
-            {/* User Info Section - styled as navigation item */}
-            <div className="flex-shrink-0 border-t border-white/20 pt-4">
-              <button
-                onClick={handleAvatarClick}
-                className={`
-                  flex items-center space-x-3 p-4 rounded-xl transition-all duration-300 text-left w-full backdrop-blur-sm
-                  text-gray-700 hover:bg-blue-500/20 hover:text-blue-800 border border-transparent hover:border-blue-300/30 bg-white/40
-                `}
-              >
-                <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center">
-                  <span className="text-white text-xs font-semibold">JD</span>
-                </div>
-                <div>
-                  <p className="font-medium">John Doe</p>
-                  <p className="text-sm opacity-70">Administrator</p>
-                </div>
-              </button>
-            </div>
           </div>
-        </div>
-      </div>
+        </div>,
+        document.getElementById("modal-root")!
+      )}
 
       {/* UserDropdown component */}
       <UserDisplayCard

@@ -7,6 +7,8 @@ import "leaflet/dist/leaflet.css"
 import L from "leaflet"
 import { useRouter } from "next/navigation"
 import { Skeleton } from "@/components/ui/skeleton"
+import PropertyListSection from "./PropertyListSection"
+import { useModalStore } from "@/context/store/ModalStore"
 
 // Fix default marker icon issue for leaflet in React
 delete (L.Icon.Default.prototype as any)._getIconUrl
@@ -28,6 +30,16 @@ const MapDisplay = () => {
   const { properties, loading } = usePropertyContext()
   const router = useRouter()
   const [focusedPropertyId, setFocusedPropertyId] = useState<string | null>(null)
+  const { isMobileModalOpen } = useModalStore();
+
+  // Hide map if mobile modal is open
+  if (isMobileModalOpen) {
+    return (
+      <div className="w-full h-[500px] rounded-xl overflow-hidden shadow-lg border border-border flex items-center justify-center lg:flex-row">
+        <Skeleton className="w-full h-full" />
+      </div>
+    )
+  }
 
   // Filter properties with valid lat/lng
   const propertiesWithLatLng = properties.filter(
@@ -51,11 +63,15 @@ const MapDisplay = () => {
 
   if (loading) {
     return (
-      <div className="w-full h-[500px] rounded-xl overflow-hidden shadow-lg border border-border flex items-center justify-center lg:flex-row"
-        >
+      <div className="w-full h-[500px] rounded-xl overflow-hidden shadow-lg border border-border flex items-center justify-center lg:flex-row">
         <Skeleton className="w-full h-full" />
       </div>
     )
+  }
+
+  // Handler to focus property on map
+  const handleFocusProperty = (propertyId: string) => {
+    setFocusedPropertyId(propertyId)
   }
 
   return (
@@ -104,40 +120,10 @@ const MapDisplay = () => {
           })}
         </MapContainer>
       </div>
-      <div
-        className="bg-card/80 border border-border rounded-xl shadow-xl p-4 overflow-auto w-full lg:w-[40vw]"
-        style={{
-          marginTop: typeof window !== "undefined" && window.innerWidth < 1024 ? "1rem" : 0,
-        }}
-      >
-        <h2 className="text-lg font-bold mb-4 text-foreground">Properties</h2>
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr className="bg-muted">
-              <th className="px-3 py-2 text-left font-semibold text-muted-foreground">ID</th>
-              <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Name</th>
-              <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Price</th>
-              <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Status</th>
-              <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Sold</th>
-            </tr>
-          </thead>
-          <tbody>
-            {propertiesWithLatLng.map((property) => (
-              <tr
-                key={property.id}
-                className={`border-b border-border cursor-pointer hover:bg-violet-100 transition`}
-                onClick={() => setFocusedPropertyId(property.id)}
-              >
-                <td className="px-3 py-2">{property.id.slice(0, 6)}</td>
-                <td className="px-3 py-2">{property.name}</td>
-                <td className="px-3 py-2">{property.price ?? "-"}</td>
-                <td className="px-3 py-2">{property.propertyStatus}</td>
-                <td className="px-3 py-2">{property.sold ? "Yes" : "No"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <PropertyListSection
+        properties={propertiesWithLatLng}
+        onFocusProperty={handleFocusProperty}
+      />
     </div>
   )
 }
