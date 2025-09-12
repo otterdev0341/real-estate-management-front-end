@@ -80,6 +80,7 @@ export class ExpenseTypeService extends BaseService {
 
       const json = await res.json();
       const items: ResEntryExpenseTypeDto[] = json.data?.items ?? [];
+      console.log("Fetched expense types:", items.length);
       return right(items);
     } catch (error) {
       return left(FetchFailed.create("ExpenseTypeService", "An unexpected error occurred during fetching expense types.", error));

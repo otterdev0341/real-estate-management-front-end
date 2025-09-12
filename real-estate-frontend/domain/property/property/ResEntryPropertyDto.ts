@@ -20,6 +20,7 @@ export default interface ResEntryPropertyDto {
   lng: string;
   sold?: boolean;
   files: FileUpload[];
+  paymentDate: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -37,7 +37,7 @@ const UpdatePaymentForm = ({
     propertyId: "",
     contactId: "",
     note: payment.note || "",
-    createdAt: payment.created ? new Date(payment.created) : undefined,
+    paymentDate: payment.paymentDate ? new Date(payment.paymentDate) : undefined,
     files: [] as File[],
   })
   const [itemInputs, setItemInputs] = useState<{ id: string; expense: string; amount: string; price: string }[]>(
@@ -110,7 +110,7 @@ const UpdatePaymentForm = ({
     if (!formData.propertyId.trim()) errors.propertyId = "Property is required"
     if (!formData.contactId.trim()) errors.contactId = "Contact is required"
     if (!formData.note.trim()) errors.note = "Note is required"
-    if (!formData.createdAt) errors.createdAt = "Created date is required"
+    if (!formData.paymentDate) errors.createdAt = "Created date is required"
     if (itemInputs.length === 0) errors.items = "At least one payment item is required"
     itemInputs.forEach((item, idx) => {
       if (!item.expense.trim()) errors[`item-expense-${idx}`] = "Expense is required"
@@ -132,7 +132,7 @@ const UpdatePaymentForm = ({
   }
 
   const handleDateChange = (date: Date | undefined) => {
-    setFormData({ ...formData, createdAt: date })
+    setFormData({ ...formData, paymentDate: date })
     setDatePickerOpen(false)
     setValidationErrors({ ...validationErrors, createdAt: "" })
     setSubmitError("")
@@ -215,7 +215,7 @@ const UpdatePaymentForm = ({
       )
       const dto = new ReqUpdatePaymentDto(
         payment.id,
-        formData.createdAt ? formData.createdAt.toISOString() : "",
+        formData.paymentDate ? formData.paymentDate.toISOString() : "",
         formData.note,
         formData.contactId,
         formData.propertyId,
@@ -367,8 +367,8 @@ const UpdatePaymentForm = ({
                 type="button"
                 disabled={isSubmitting || isSuccess}
               >
-                {formData.createdAt
-                  ? format(formData.createdAt, "yyyy-MM-dd")
+                {formData.paymentDate
+                  ? format(formData.paymentDate, "yyyy-MM-dd")
                   : "Select date"}
                 <ChevronDownIcon />
               </Button>
@@ -376,7 +376,7 @@ const UpdatePaymentForm = ({
             <PopoverContent className="w-auto overflow-hidden p-0" align="start">
               <Calendar
                 mode="single"
-                selected={formData.createdAt}
+                selected={formData.paymentDate}
                 captionLayout="dropdown"
                 onSelect={handleDateChange}
               />
@@ -504,7 +504,7 @@ const UpdatePaymentForm = ({
             !formData.propertyId.trim() ||
             !formData.contactId.trim() ||
             !formData.note.trim() ||
-            !formData.createdAt ||
+            !formData.paymentDate ||
             itemInputs.length === 0 ||
             isSubmitting ||
             isSuccess

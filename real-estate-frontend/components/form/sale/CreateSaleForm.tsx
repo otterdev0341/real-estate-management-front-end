@@ -28,7 +28,7 @@ interface CreateSaleFormProps {
 }
 
 const initialState = {
-  createdAt: new Date(),
+  saleDate: new Date(),
   note: "",
   propertyId: "",
   contactId: "",
@@ -66,7 +66,7 @@ const CreateSaleForm = ({ onSubmit, onCancel }: CreateSaleFormProps) => {
     if (!formData.contactId.trim()) errors.contactId = "Contact is required"
     if (!formData.price || isNaN(Number(formData.price))) errors.price = "Price is required"
     if (!formData.note.trim()) errors.note = "Note is required"
-    if (!formData.createdAt) errors.createdAt = "Created date is required"
+    if (!formData.saleDate) errors.createdAt = "Created date is required"
     // files are NOT required
     setValidationErrors(errors)
     return Object.keys(errors).length === 0
@@ -114,7 +114,7 @@ const CreateSaleForm = ({ onSubmit, onCancel }: CreateSaleFormProps) => {
   }
 
   const handleDateChange = (date: Date | undefined) => {
-    setFormData({ ...formData, createdAt: date ?? new Date() })
+    setFormData({ ...formData, saleDate: date ?? new Date() })
     setDatePickerOpen(false)
     
   }
@@ -125,7 +125,7 @@ const CreateSaleForm = ({ onSubmit, onCancel }: CreateSaleFormProps) => {
     setIsSubmitting(true)
     try {
       const dto = new ReqCreateSaleDto(
-        formData.createdAt,
+        formData.saleDate,
         formData.note,
         formData.propertyId,
         formData.contactId,
@@ -249,8 +249,8 @@ const CreateSaleForm = ({ onSubmit, onCancel }: CreateSaleFormProps) => {
                 className="w-48 justify-between font-normal"
                 type="button"
               >
-                {formData.createdAt
-                  ? formData.createdAt.toLocaleDateString()
+                {formData.saleDate
+                  ? formData.saleDate.toLocaleDateString()
                   : "Select date"}
                 <ChevronDownIcon />
               </Button>
@@ -258,7 +258,7 @@ const CreateSaleForm = ({ onSubmit, onCancel }: CreateSaleFormProps) => {
             <PopoverContent className="w-auto overflow-hidden p-0" align="start">
               <Calendar
                 mode="single"
-                selected={formData.createdAt}
+                selected={formData.saleDate}
                 captionLayout="dropdown"
                 onSelect={handleDateChange}
               />
@@ -292,7 +292,7 @@ const CreateSaleForm = ({ onSubmit, onCancel }: CreateSaleFormProps) => {
             !formData.contactId.trim() ||
             !formData.price ||
             !formData.note.trim() ||
-            !formData.createdAt ||
+            !formData.saleDate ||
             isSubmitting
           }
           className="px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2"

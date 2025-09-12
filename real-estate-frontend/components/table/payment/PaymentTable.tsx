@@ -140,7 +140,7 @@ const PaymentTable = () => {
                         : payment.note}
                     </td>
                     <td className="px-6 py-4 text-sm text-foreground">{payment.totalAmount?.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(payment.created?.toString())}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(payment.paymentDate?.toString())}</td>
                     <td className="px-6 py-4 text-sm flex gap-2">
                       <button
                         type="button"
@@ -206,7 +206,7 @@ const PaymentTable = () => {
                   Contact: <span className="font-medium text-foreground">{payment.contact}</span>
                 </p>
                 <p className="text-muted-foreground text-xs mt-1">
-                  Created: {formatDate(payment.created?.toString())}
+                  Created: {formatDate(payment.paymentDate?.toString())}
                 </p>
                 <p className="text-muted-foreground text-xs">
                   Total: {payment.totalAmount?.toLocaleString()}

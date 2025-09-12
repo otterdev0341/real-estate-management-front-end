@@ -170,8 +170,8 @@ const ViewPropertyForm = ({ propertyId }: ViewPropertyFormProps) => {
               <div>
                 <div className="text-sm font-semibold text-gray-600 mb-2">Maximum Budget</div>
                 <div className="text-base text-gray-800">
-                  {property.maximumBudget !== undefined && property.maximumBudget !== null && property.maximumBudget !== ""
-                    ? property.maximumBudget
+                  {property.budget !== undefined && property.budget !== null && property.budget !== ""
+                    ? property.budget
                     : "-"}
                 </div>
               </div>
@@ -279,7 +279,7 @@ const ViewPropertyForm = ({ propertyId }: ViewPropertyFormProps) => {
             area={property.area}
             price={Number(property.price)}
             fsp={Number(property.fsp)}
-            maximumBudget={Number(property.maximumBudget)}
+            budget={Number(property.budget)}
             propertyStatus={property.propertyStatus}
             ownerBy={property.ownerBy}
             mapUrl={property.mapUrl}

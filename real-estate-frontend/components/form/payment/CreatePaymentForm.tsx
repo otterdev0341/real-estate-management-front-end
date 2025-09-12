@@ -30,7 +30,7 @@ interface CreatePaymentFormProps {
 }
 
 const initialState = {
-  createdAt: new Date(),
+  paymentDate: new Date(),
   note: "",
   propertyId: "",
   contactId: "",
@@ -77,7 +77,7 @@ const CreatePaymentForm = ({ onSubmit, onCancel }: CreatePaymentFormProps) => {
     if (!formData.propertyId.trim()) errors.propertyId = "Property is required"
     if (!formData.contactId.trim()) errors.contactId = "Contact is required"
     if (!formData.note.trim()) errors.note = "Note is required"
-    if (!formData.createdAt) errors.createdAt = "Created date is required"
+    if (!formData.paymentDate) errors.createdAt = "Created date is required"
     if (itemInputs.length === 0) errors.items = "At least one payment item is required"
     itemInputs.forEach((item, idx) => {
       if (!item.expense.trim()) errors[`item-expense-${idx}`] = "Expense is required"
@@ -130,7 +130,7 @@ const CreatePaymentForm = ({ onSubmit, onCancel }: CreatePaymentFormProps) => {
   }
 
   const handleDateChange = (date: Date | undefined) => {
-    setFormData({ ...formData, createdAt: date ?? new Date() })
+    setFormData({ ...formData, paymentDate: date ?? new Date() })
     setDatePickerOpen(false)
   }
 
@@ -177,9 +177,9 @@ const CreatePaymentForm = ({ onSubmit, onCancel }: CreatePaymentFormProps) => {
       )
       // Prepare DTO
       const dto = new ReqCreatePaymentDto(
-        formData.createdAt instanceof Date
-          ? formData.createdAt.toISOString()
-          : formData.createdAt,
+        formData.paymentDate instanceof Date
+          ? formData.paymentDate.toISOString()
+          : formData.paymentDate,
         formData.note,
         formData.contactId,
         formData.propertyId,
@@ -294,10 +294,10 @@ const CreatePaymentForm = ({ onSubmit, onCancel }: CreatePaymentFormProps) => {
               className="w-48 justify-between font-normal"
               type="button"
             >
-              {formData.createdAt
-                ? formData.createdAt instanceof Date
-                  ? format(formData.createdAt, "yyyy-MM-dd")
-                  : formData.createdAt
+              {formData.paymentDate
+                ? formData.paymentDate instanceof Date
+                  ? format(formData.paymentDate, "yyyy-MM-dd")
+                  : formData.paymentDate
                 : "Select date"}
               <ChevronDownIcon />
             </Button>
@@ -305,7 +305,7 @@ const CreatePaymentForm = ({ onSubmit, onCancel }: CreatePaymentFormProps) => {
           <PopoverContent className="w-auto overflow-hidden p-0" align="start">
             <Calendar
               mode="single"
-              selected={formData.createdAt instanceof Date ? formData.createdAt : new Date(formData.createdAt)}
+              selected={formData.paymentDate instanceof Date ? formData.paymentDate : new Date(formData.paymentDate)}
               captionLayout="dropdown"
               onSelect={date => handleDateChange(date)}
             />
@@ -429,7 +429,7 @@ const CreatePaymentForm = ({ onSubmit, onCancel }: CreatePaymentFormProps) => {
             !formData.propertyId.trim() ||
             !formData.contactId.trim() ||
             !formData.note.trim() ||
-            !formData.createdAt ||
+            !formData.paymentDate ||
             itemInputs.length === 0 ||
             isSubmitting
           }

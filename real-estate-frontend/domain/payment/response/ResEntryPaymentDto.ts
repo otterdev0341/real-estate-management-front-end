@@ -8,7 +8,7 @@ export default class ResEntryPaymentDto extends BaseDateConverter {
     note: string;
     contact: string
     items: ResEntryPaymentItemDto[];
-    created: Date;
+    paymentDate: Date;
     updated: Date;
 
     
@@ -29,7 +29,7 @@ export default class ResEntryPaymentDto extends BaseDateConverter {
         this.note = note;
         this.contact = contact;
         this.items = items;
-        this.created = this.convertStringToDate(jsonCreated);
+        this.paymentDate = this.convertStringToDate(jsonCreated);
         this.updated = this.convertStringToDate(jsonUpdated);
     }
 

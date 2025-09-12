@@ -7,6 +7,7 @@ import { ServiceError } from "@/implementation/ServiceError"
 import ResEntryExpenseTypeDto from "@/domain/expense/ResEntryExpenseTypeDto"
 import { AlertCircle, Loader2 } from "lucide-react"
 import { CheckCircle } from "lucide-react"
+import { useExpenseTypeContext } from "@/context/store/ExpenseTypeStore"
 
 interface CreateExpenseTypeFormProps {
   onSubmit: (expenseTypeData: { detail: string }) => void
@@ -20,6 +21,7 @@ const CreateExpenseTypeForm = ({ onSubmit, onCancel }: CreateExpenseTypeFormProp
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
+  const {refreshExpenseTypes} = useExpenseTypeContext(); // To refresh expense types after creation if needed
 
   const validateForm = () => {
     const errors = { detail: "" }
@@ -60,6 +62,7 @@ const CreateExpenseTypeForm = ({ onSubmit, onCancel }: CreateExpenseTypeFormProp
       }
       
       setIsSubmitting(false)
+      refreshExpenseTypes();
       setIsSuccess(true)
       
       // Auto-close after showing success for 1.5 seconds

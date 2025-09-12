@@ -2,7 +2,7 @@ import { BaseDateConverter } from "@/domain/utility/BaseDateConverter";
 import ReqCreatePaymentItemDto from "./ReqCreatePaymentItemDto";
 
 export default class ReqCreatePaymentDto extends BaseDateConverter {
-    private createdAt: string; // ISO 8601 format
+    private paymentDate: string; // ISO 8601 format
     private note: string;
     private contact: string; // UUID
     private property: string; // UUID
@@ -10,7 +10,7 @@ export default class ReqCreatePaymentDto extends BaseDateConverter {
     private files: Blob[];
 
     constructor(
-        createdAt: string,
+        paymentDate: string,
         note: string,
         contact: string,
         property: string,
@@ -18,7 +18,7 @@ export default class ReqCreatePaymentDto extends BaseDateConverter {
         files: File[] = []
     ) {
         super();
-        this.createdAt = createdAt;
+        this.paymentDate = paymentDate;
         this.note = note;
         this.contact = contact;
         this.property = property;
@@ -27,8 +27,8 @@ export default class ReqCreatePaymentDto extends BaseDateConverter {
     }
 
     // Getters
-    public getCreatedAt(): string {
-        return this.createdAt;
+    public getPaymentDate(): string {
+        return this.paymentDate;
     }
 
     public getNote(): string {
@@ -52,8 +52,8 @@ export default class ReqCreatePaymentDto extends BaseDateConverter {
     }
 
     // Setters
-    public setCreatedAt(createdAt: Date): void {
-        this.createdAt = this.formatDateToMicroseconds(createdAt);
+    public setPaymentDate(paymentDate: Date): void {
+        this.paymentDate = this.formatDateToMicroseconds(paymentDate);
     }
 
     public setNote(note: string): void {
@@ -82,7 +82,7 @@ export default class ReqCreatePaymentDto extends BaseDateConverter {
         // Prepare the DTO for the "data" field (matches backend expectation)
         const data = {
             note: this.note,
-            createdAt: this.createdAt,
+            paymentDate: this.paymentDate,
             contact: this.contact,
             property: this.property,
             items: this.items,

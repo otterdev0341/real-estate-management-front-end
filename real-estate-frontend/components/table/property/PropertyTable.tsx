@@ -421,7 +421,7 @@ const PropertyTable = () => {
             area={editPropertyData.area ?? ""}
             price={typeof editPropertyData.price === "number" ? editPropertyData.price : Number(editPropertyData.price) || 0.0}
             fsp={typeof editPropertyData.fsp === "number" ? editPropertyData.fsp : Number(editPropertyData.fsp) || 0.0}
-            maximumBudget={typeof editPropertyData.maximumBudget === "number" ? editPropertyData.maximumBudget : Number(editPropertyData.maximumBudget) || 0.0}
+            budget={typeof editPropertyData.budget === "number" ? editPropertyData.budget : Number(editPropertyData.budget) || 0.0}
             propertyStatus={editPropertyData.propertyStatus ?? ""}
             ownerBy={editPropertyData.ownerBy ?? ""}
             mapUrl={editPropertyData.mapUrl ?? ""}

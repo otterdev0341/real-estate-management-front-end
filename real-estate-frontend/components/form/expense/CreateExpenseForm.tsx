@@ -37,6 +37,12 @@ const CreateExpenseForm = ({ onSuccess, onCancel }: CreateExpenseFormProps) => {
   const [isSuccess, setIsSuccess] = React.useState(false)
   const [isClosing, setIsClosing] = React.useState(false)
   const [errorLabel, setErrorLabel] = React.useState("")
+  const {refreshExpenseTypes} = useExpenseTypeContext() // To refresh expense types after creation if needed
+
+
+  React.useEffect(() => {
+    refreshExpenseTypes();
+  },[])
 
   const validateForm = () => {
     const errors = { detail: "", expenseType: "" }

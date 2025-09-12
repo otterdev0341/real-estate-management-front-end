@@ -179,7 +179,7 @@ const ViewSaleForm = ({ saleId }: ViewSaleFormProps) => {
               <div>
                 <div className="text-sm font-semibold text-gray-600 mb-2">Created At</div>
                 <div className="text-base text-gray-800">
-                  {sale.createdAt ? formatDate(sale.createdAt.toISOString()) : "-"}
+                  {sale.saleDate ? formatDate(sale.saleDate.toISOString()) : "-"}
                 </div>
               </div>
               <div>
@@ -207,7 +207,7 @@ const ViewSaleForm = ({ saleId }: ViewSaleFormProps) => {
             contactId={sale.contact}
             price={sale.price}
             note={sale.note}
-            createdAt={sale.createdAt ? sale.createdAt.toString() : ""}
+            saleDate={sale.saleDate ? sale.saleDate.toString() : ""}
             onCancel={handleCancelEdit}
             onSuccess={handleUpdateSale}
           />

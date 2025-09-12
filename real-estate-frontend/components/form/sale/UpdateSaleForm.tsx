@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useEffect, useState } from "react"
 import { usePropertyContext } from "@/context/store/PropertyStore"
 import { useContactContext } from "@/context/store/ContactStore"
 import ReqUpdateSaleDto from "@/domain/sale/ReqUpdateSaleDto"
@@ -22,7 +22,7 @@ interface UpdateSaleFormProps {
   contactId: string
   price: number
   note: string
-  createdAt?: string
+  saleDate?: string
   onCancel: () => void
   onSuccess: () => void
 }
@@ -33,19 +33,30 @@ const UpdateSaleForm = ({
   contactId,
   price,
   note,
-  createdAt,
+  saleDate,
   onCancel,
   onSuccess,
 }: UpdateSaleFormProps) => {
   const { properties } = usePropertyContext()
   const { contacts } = useContactContext()
 
+  // Helper to get correct property/contact id from value (string or id)
+  const getPropertyId = (value: string) => {
+    const found = properties.find(p => p.id === value || p.name === value)
+    return found ? found.id : value
+  }
+  const getContactId = (value: string) => {
+    const found = contacts.find(c => c.id === value || c.businessName === value)
+    return found ? found.id : value
+  }
+
+  // Initialize formData with correct ids
   const [formData, setFormData] = useState({
-    propertyId: propertyId || "",
-    contactId: contactId || "",
+    propertyId: getPropertyId(propertyId),
+    contactId: getContactId(contactId),
     price: price || 0,
     note: note || "",
-    createdAt: createdAt ? new Date(createdAt) : undefined,
+    saleDate: saleDate ? new Date(saleDate) : undefined,
   })
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -76,7 +87,7 @@ const UpdateSaleForm = ({
     if (!formData.contactId.trim()) errors.contactId = "Contact is required"
     if (!formData.price || isNaN(Number(formData.price))) errors.price = "Price is required"
     if (!formData.note.trim()) errors.note = "Note is required"
-    if (!formData.createdAt) errors.createdAt = "Created date is required"
+    if (!formData.saleDate) errors.saleDate = "Created date is required"
     setValidationErrors(errors)
     return Object.keys(errors).length === 0
   }
@@ -92,7 +103,7 @@ const UpdateSaleForm = ({
   }
 
   const handleDateChange = (date: Date | undefined) => {
-    setFormData({ ...formData, createdAt: date })
+    setFormData({ ...formData, saleDate: date })
     setDatePickerOpen(false)
     setValidationErrors({ ...validationErrors, createdAt: "" })
     setSubmitError("")
@@ -123,7 +134,7 @@ const UpdateSaleForm = ({
       prePersistSaleDto.setContactId(formData.contactId);
       prePersistSaleDto.setPrice(Number(formData.price));
       prePersistSaleDto.setNote(formData.note);
-      prePersistSaleDto.setCreatedAt(formData.createdAt!);
+      prePersistSaleDto.setSaleDate(formData.saleDate!);
       // console.log("Prepared ReqUpdateSaleDto:", prePersistSaleDto);
       const result = await SaleService.instance.updateSale(prePersistSaleDto);
       if (isLeft(result)) {
@@ -251,8 +262,8 @@ const UpdateSaleForm = ({
                 type="button"
                 disabled={isSubmitting || isSuccess}
               >
-                {formData.createdAt
-                  ? formData.createdAt.toLocaleDateString()
+                {formData.saleDate
+                  ? formData.saleDate.toLocaleDateString()
                   : "Select date"}
                 <ChevronDownIcon />
               </Button>
@@ -260,7 +271,7 @@ const UpdateSaleForm = ({
             <PopoverContent className="w-auto overflow-hidden p-0" align="start">
               <Calendar
                 mode="single"
-                selected={formData.createdAt}
+                selected={formData.saleDate}
                 captionLayout="dropdown"
                 onSelect={handleDateChange}
               />
@@ -293,7 +304,7 @@ const UpdateSaleForm = ({
             !formData.contactId.trim() ||
             !formData.price ||
             !formData.note.trim() ||
-            !formData.createdAt ||
+            !formData.saleDate ||
             isSubmitting ||
             isSuccess
           }

@@ -9,7 +9,7 @@ export default class ResEntrySaleDto extends BaseDateConverter {
     price: number;
     note: string;
     createdBy: string;
-    createdAt: Date;
+    saleDate: Date;
     updatedAt: Date;
     files: FileUpload[];
 
@@ -21,7 +21,7 @@ export default class ResEntrySaleDto extends BaseDateConverter {
         price: number,
         note: string,
         createdBy: string,
-        jsonCreatedAt: string,
+        saleDate: string,
         jsonUpdatedAt: string,
         files: FileUpload[] = []
     ) {
@@ -33,7 +33,7 @@ export default class ResEntrySaleDto extends BaseDateConverter {
         this.price = price;
         this.note = note;
         this.createdBy = createdBy;
-        this.createdAt = this.convertStringToDate(jsonCreatedAt);
+        this.saleDate = this.convertStringToDate(saleDate);
         this.updatedAt = this.convertStringToDate(jsonUpdatedAt);
         this.files = files;
     }

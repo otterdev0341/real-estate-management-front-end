@@ -169,7 +169,7 @@ const ViewPaymentForm = ({ paymentId }: ViewPaymentFormProps) => {
               <div>
                 <div className="text-sm font-semibold text-gray-600 mb-2">Created At</div>
                 <div className="text-base text-gray-800">
-                  {payment.created ? formatDate(payment.created.toISOString()) : "-"}
+                  {payment.paymentDate ? formatDate(payment.paymentDate.toISOString()) : "-"}
                 </div>
               </div>
               <div>

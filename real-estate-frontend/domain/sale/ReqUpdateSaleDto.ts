@@ -5,7 +5,7 @@ import { BaseDateConverter } from "../utility/BaseDateConverter";
 
 export default class ReqUpdateSaleDto extends BaseDateConverter {
     private saleId: string;
-    private createdAt: Date;
+    private saleDate: Date;
     private note: string;
     private propertyId: string; // UUID
     private contactId: string;
@@ -16,7 +16,7 @@ export default class ReqUpdateSaleDto extends BaseDateConverter {
 
     constructor(
         saleId: string,
-        createdAt: Date,
+        saleDate: Date,
         note: string,
         priopertyId: string,
         contactId: string,
@@ -24,7 +24,7 @@ export default class ReqUpdateSaleDto extends BaseDateConverter {
         
     ) {
         super();
-        this.createdAt = createdAt;
+        this.saleDate = saleDate;
         this.note = note;
         this.propertyId = priopertyId;
         this.contactId = contactId;
@@ -43,8 +43,8 @@ export default class ReqUpdateSaleDto extends BaseDateConverter {
         return this.saleId;
     }
 
-    public getCreatedAt(): Date {
-        return this.createdAt;
+    public getSaleDate(): Date {
+        return this.saleDate;
     }
 
     public getNote(): string {
@@ -68,8 +68,8 @@ export default class ReqUpdateSaleDto extends BaseDateConverter {
         this.saleId = saleId;
     }
 
-    public setCreatedAt(createdAt: Date): void {
-        this.createdAt = createdAt;
+    public setSaleDate(createdAt: Date): void {
+        this.saleDate = createdAt;
     }
 
     public setNote(note: string): void {
@@ -92,7 +92,7 @@ export default class ReqUpdateSaleDto extends BaseDateConverter {
 
     public toFormData(): FormData {
         const formData = new FormData();
-        formData.append('createdAt', this.formatDateToMicroseconds(this.createdAt));
+        formData.append('paymentDate', this.formatDateToMicroseconds(this.saleDate));
         formData.append('note', this.note);
         formData.append('propertyId', this.propertyId);
         formData.append('contactId', this.contactId);

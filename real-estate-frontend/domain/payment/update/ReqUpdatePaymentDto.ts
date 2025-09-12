@@ -2,7 +2,7 @@ import RequpdatePaymentItemDto from "./ReqUpdatePaymentItemDto";
 
 export default class ReqUpdatePaymentDto {
     private id: string; // UUID
-    private createdAt: string; // ISO 8601 format
+    private paymentDate: string; // ISO 8601 format
     private note: string;
     private contact: string; // UUID
     private property: string; // UUID
@@ -11,7 +11,7 @@ export default class ReqUpdatePaymentDto {
 
     constructor(
         id: string,
-        createdAt: string,
+        paymentDate: string,
         note: string,
         contact: string,
         property: string,
@@ -19,7 +19,7 @@ export default class ReqUpdatePaymentDto {
         
     ) {
         this.id = id;
-        this.createdAt = createdAt;
+        this.paymentDate = paymentDate;
         this.note = note;
         this.contact = contact;
         this.property = property;
@@ -33,8 +33,8 @@ export default class ReqUpdatePaymentDto {
         return this.id;
     }
 
-    public getCreatedAt(): string {
-        return this.createdAt;
+    public getPaymentDate(): string {
+        return this.paymentDate;
     }
 
     public getNote(): string {
@@ -61,8 +61,8 @@ export default class ReqUpdatePaymentDto {
     }
 
 
-    public setCreatedAt(createdAt: string): void {
-        this.createdAt = createdAt;
+    public setPaymentDate(createdAt: string): void {
+        this.paymentDate = createdAt;
     }
 
     public setNote(note: string): void {
@@ -88,7 +88,7 @@ export default class ReqUpdatePaymentDto {
 
         const data = {
             note: this.note,
-            createdAt: this.createdAt,
+            paymentDate: this.paymentDate,
             contact: this.contact,
             property: this.property,
             items: this.items,

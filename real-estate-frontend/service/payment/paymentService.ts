@@ -163,7 +163,7 @@ export class PaymentService extends BaseService {
                                 item.price
                             )
                         ),
-                        payment.createdAt,
+                        payment.paymentDate,
                         payment.updatedAt
                     )
                 )
@@ -248,7 +248,7 @@ export class PaymentService extends BaseService {
                 data.note ?? "",
                 data.contact,
                 items,
-                data.createdAt,
+                data.paymentDate,
                 data.updatedAt
             );
 
@@ -393,7 +393,7 @@ export class PaymentService extends BaseService {
                                 item.price
                             )
                         ),
-                        payment.createdAt,
+                        payment.paymentDate,
                         payment.updatedAt
                     )
                 )

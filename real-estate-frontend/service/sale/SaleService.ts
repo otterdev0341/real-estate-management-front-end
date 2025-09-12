@@ -115,7 +115,7 @@ export class SaleService extends BaseService {
         responseData.price,
         responseData.note,
         responseData.createdBy,
-        responseData.createdAt,
+        responseData.saleDate,
         responseData.updatedAt
       ));
     } catch (error) {
@@ -159,7 +159,7 @@ export class SaleService extends BaseService {
               sale.price,
               sale.note,
               sale.createdBy,
-              sale.createdAt,
+              sale.saleDate,
               sale.updatedAt
             )
           )
@@ -230,7 +230,7 @@ export class SaleService extends BaseService {
         data.price,
         data.note,
         data.createdBy,
-        data.createdAt,
+        data.saleDate,
         data.updatedAt
       );
       return right(sale);

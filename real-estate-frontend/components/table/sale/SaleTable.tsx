@@ -10,6 +10,8 @@ import CommonDeleteForm from "@/components/form/delete/CommonDeleteForm"
 import { SaleService } from "@/service/sale/SaleService"
 import { isLeft } from "@/implementation/Either"
 import { useRouter } from "next/navigation"
+import { usePropertyContext } from "@/context/store/PropertyStore"
+import { useContactContext } from "@/context/store/ContactStore"
 
 const SaleTable = () => {
   const { sales, loading, refreshSales } = useSaleContext()
@@ -24,6 +26,8 @@ const SaleTable = () => {
   const [editSale, setEditSale] = useState<any | null>(null)
   const router = useRouter()
   const [isNavigating, setIsNavigating] = useState(false)
+  const { refreshProperties, properties } = usePropertyContext()
+  const { contacts } = useContactContext()
 
   const handleEdit = (saleId: string) => {
     const sale = sales.find(s => s.id === saleId)
@@ -54,6 +58,7 @@ const SaleTable = () => {
     setDeleteId(null)
     await refreshSales()
     await refreshSales() // Refresh twice to ensure consistency
+    await refreshProperties();
   }
 
   const handleCloseCreate = () => setIsCreateModalOpen(false)
@@ -97,6 +102,16 @@ const SaleTable = () => {
       sale.id?.toLowerCase().includes(q)
     )
   })
+
+  // Helper to get correct property/contact id from value (string or id)
+  const getPropertyId = (value: string) => {
+    const found = properties.find(p => p.id === value || p.name === value)
+    return found ? found.id : value
+  }
+  const getContactId = (value: string) => {
+    const found = contacts.find(c => c.id === value || c.businessName === value)
+    return found ? found.id : value
+  }
 
   return (
     <div className="space-y-6 relative">
@@ -172,7 +187,7 @@ const SaleTable = () => {
                     <td className="px-6 py-4 text-sm text-foreground">{sale.property}</td>
                     <td className="px-6 py-4 text-sm text-foreground">{sale.contact}</td>
                     <td className="px-6 py-4 text-sm text-foreground">{sale.price?.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(sale.createdAt?.toString())}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(sale.saleDate?.toString())}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{formatDate(sale.updatedAt?.toString())}</td>
                     <td className="px-6 py-4 text-center">
                       <div className="inline-flex items-center justify-center gap-2">
@@ -243,7 +258,7 @@ const SaleTable = () => {
                   Purchase price: {sale.price?.toLocaleString()}
                 </p>
                 <p className="text-muted-foreground text-xs mt-1">
-                  Created: {formatDate(sale.createdAt?.toString())}
+                  Created: {formatDate(sale.saleDate?.toString())}
                 </p>
                 <p className="text-muted-foreground text-xs">
                   Updated: {formatDate(sale.updatedAt?.toString())}
@@ -310,11 +325,11 @@ const SaleTable = () => {
         {editSale && (
           <UpdateSaleForm
             saleId={editSale.id}
-            propertyId={editSale.propertyId || ""}
-            contactId={editSale.contactId || ""}
+            propertyId={getPropertyId(editSale.propertyId || editSale.property || "")}
+            contactId={getContactId(editSale.contactId || editSale.contact || "")}
             price={editSale.price}
             note={editSale.note || ""}
-            createdAt={editSale.createdAt ? editSale.createdAt.toString() : ""}
+            saleDate={editSale.saleDate ? editSale.saleDate.toString() : ""}
             onCancel={handleCloseEdit}
             onSuccess={handleEditSuccess}
           />
