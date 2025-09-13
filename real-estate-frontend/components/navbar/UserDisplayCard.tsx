@@ -168,15 +168,7 @@ export default function UserDisplayCard({ isOpen, onClose, position }: UserDropd
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-center space-x-4 p-4 lg:p-4 max-lg:p-6 border-t lg:border-gray-700/50 max-lg:border-white/20 lg:mt-0 max-lg:mt-auto">
-              <button className="lg:text-gray-400 max-lg:text-white/80 text-sm lg:text-sm max-lg:text-base lg:hover:text-gray-300 max-lg:hover:text-white transition-colors">
-                Privacy Policy
-              </button>
-              <span className="lg:text-gray-600 max-lg:text-white/60">•</span>
-              <button className="lg:text-gray-400 max-lg:text-white/80 text-sm lg:text-sm max-lg:text-base lg:hover:text-gray-300 max-lg:hover:text-white transition-colors">
-                Terms of Service
-              </button>
-            </div>
+            
           </>
         )}
       </div>

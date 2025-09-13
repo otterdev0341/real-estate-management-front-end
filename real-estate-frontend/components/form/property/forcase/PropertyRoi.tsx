@@ -37,6 +37,7 @@ const PropertyRoi = ({ propertyId, propertyDetail }: PropertyRoiProps) => {
             <th className="px-4 py-2 text-left">Contact</th>
             <th className="px-4 py-2 text-right">Amount</th>
             <th className="px-4 py-2 text-right">Percent (%)</th>
+            <th className="px-4 py-2 text-right">Profit</th>
             <th className="px-4 py-2 text-right">ROI</th>
           </tr>
         </thead>
@@ -44,12 +45,16 @@ const PropertyRoi = ({ propertyId, propertyDetail }: PropertyRoiProps) => {
           {investments.map((inv) =>
             inv.getItems().map((item) => {
               const percent = item.getPercent() ?? 0
-              const roi = ((getProfit(propertyDetail) ?? 0) * percent) / 100
+              const profit = ((getProfit(propertyDetail) ?? 0) * percent) / 100
+              const amount = item.getAmount() ?? 0
+              // ROI = (profit / amount) * 100
+              const roi = amount > 0 ? (profit / amount) * 100 : 0
               return (
                 <tr key={item.getId()} className="border-t">
                   <td className="px-4 py-2">{item.getContact()}</td>
-                  <td className="px-4 py-2 text-right">{item.getAmount().toLocaleString()}</td>
+                  <td className="px-4 py-2 text-right">{amount.toLocaleString()}</td>
                   <td className="px-4 py-2 text-right">{percent.toFixed(2)}</td>
+                  <td className="px-4 py-2 text-right">{profit.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
                   <td className="px-4 py-2 text-right">{roi.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
                 </tr>
               )

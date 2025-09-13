@@ -21,6 +21,19 @@ import {
 } from "@heroicons/react/24/outline"
 import UserDisplayCard from "./UserDisplayCard"
 import ModalStore, { useModalStore } from "@/context/store/ModalStore"
+import { useContactContext } from "@/context/store/ContactStore"
+import { useContactTypeContext } from "@/context/store/ContactTypeStore"
+import { useExpenseContext } from "@/context/store/ExpenseStore"
+import { useExpenseTypeContext } from "@/context/store/ExpenseTypeStore"
+import { useMemoContext } from "@/context/store/MemoStore"
+import { useMemoTypeContext } from "@/context/store/MemoTypeStore"
+import { usePaymentContext } from "@/context/store/PaymentStore"
+import { useInvestmentContext } from "@/context/store/InvestmentStore"
+import { useSaleContext } from "@/context/store/SaleStore"
+import { usePropertyContext } from "@/context/store/PropertyStore"
+import { usePropertyStatusContext } from "@/context/store/PropertyStatusStore"
+import { usePropertyTypeContext } from "@/context/store/PropertyTypeStore"
+import { useUserContext } from "@/context/store/UserStore"
 
 
 const navigationItems = [
@@ -36,6 +49,47 @@ const navigationItems = [
   { name: "Investment", icon: ArrowTrendingUpIcon, href: "/service/investment" },
 ]
 
+export const initialStore = async () => {
+  const {refreshContacts} = useContactContext();
+  const {refreshContactTypes} = useContactTypeContext();
+
+  const {refreshExpenses} = useExpenseContext();
+  const {refreshExpenseTypes} = useExpenseTypeContext();
+
+  const {refreshMemos} = useMemoContext();
+  const {refreshMemoTypes} = useMemoTypeContext();
+
+  const {refreshPayments} = usePaymentContext();
+  const {refreshInvestments} = useInvestmentContext();
+  const {refreshSales} = useSaleContext();
+
+
+  const {refreshProperties} = usePropertyContext();
+  const {refreshPropertyStatuses} = usePropertyStatusContext();
+  const {refreshPropertyTypes} = usePropertyTypeContext();
+
+  const {refreshUser} = useUserContext();
+
+  await refreshContacts();
+  await refreshContactTypes();
+
+  await refreshExpenses();
+  await refreshExpenseTypes();
+
+  await refreshMemos();
+  await refreshMemoTypes();
+
+  await refreshPayments();
+  await refreshInvestments();
+  await refreshSales();
+
+  await refreshProperties();
+  await refreshPropertyStatuses();
+  await refreshPropertyTypes();
+
+  await refreshUser();
+
+}
 
 
 export function VerticalNavbar() {
@@ -60,6 +114,12 @@ export function VerticalNavbar() {
   const router = useRouter()
   
   const {setMobileModalOpen} = useModalStore();
+  const {user} = useUserContext();
+
+  useEffect(() => {
+    initialStore();
+  }, []);
+
   const handleNavigation = async (href: string, itemName: string) => {
     if (href === "#") return
     
@@ -82,7 +142,7 @@ export function VerticalNavbar() {
     if (avatarRef.current) {
       const rect = avatarRef.current.getBoundingClientRect()
       // Position dropdown to the right of avatar, vertically centered
-      const top = rect.top + rect.height / 2
+      const top = (rect.top + rect.height / 2) 
       const left = rect.right + 4 // 12px margin from avatar
 
       setDropdownPosition({ top, left })
@@ -100,7 +160,7 @@ export function VerticalNavbar() {
       {/* Desktop Navbar */}
       <div className="hidden lg:flex w-20 bg-white/10 backdrop-blur-xl border-r border-white/20 min-h-screen flex-col items-center py-6 shadow-2xl fixed left-0 top-0 z-30">
         {/* Navigation Items */}
-        <div className="flex flex-col space-y-4 flex-1 overflow-y-auto scrollbar-hide">
+        <div className="flex flex-col space-y-4 flex-1 overflow-y-auto scrollbar-hide flex-shrink-0 mt-4">
           {navigationItems.map((item, index) => {
             const Icon = item.icon
             const itemName = item.name || "Dashboard"
@@ -147,7 +207,7 @@ export function VerticalNavbar() {
             `}
           >
             <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center">
-              <span className="text-white text-xs font-semibold">JD</span>
+              <span className="text-white text-xs font-semibold">{user?.firstName.charAt(0).toUpperCase()}{user?.lastName.charAt(0).toUpperCase()}</span>
             </div>
             
             {/* Tooltip for desktop */}
@@ -233,11 +293,11 @@ export function VerticalNavbar() {
                   `}
                 >
                   <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center">
-                    <span className="text-white text-xs font-semibold">JD</span>
+                    <span className="text-white text-xs font-semibold">{user?.firstName.charAt(0).toUpperCase()}{user?.lastName.charAt(0).toUpperCase()}</span>
                   </div>
                   <div>
-                    <p className="font-medium">John Doe</p>
-                    <p className="text-sm opacity-70">Administrator</p>
+                    <p className="font-medium">{`${user?.firstName} ${user?.lastName}`}</p>
+                    <p className="text-sm opacity-70">{user?.role}</p>
                   </div>
                 </button>
               </div>
